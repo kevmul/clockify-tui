@@ -1,6 +1,7 @@
 package config
 
 import (
+	debug "clockify-app/internal/utils"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -34,6 +35,7 @@ func LoadConfig() (*Config, error) {
 
 // Save writes the configuration to the config file.
 func (c *Config) Save() error {
+	debug.Log("Saving configuration to file...")
 	path, err := configPath()
 	if err != nil {
 		return err
@@ -46,6 +48,7 @@ func (c *Config) Save() error {
 	}
 
 	data, err := json.MarshalIndent(c, "", "  ")
+	debug.Log(string(data))
 	if err != nil {
 		return err
 	}

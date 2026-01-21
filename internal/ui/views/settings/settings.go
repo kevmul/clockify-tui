@@ -6,6 +6,7 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
+	debug "clockify-app/internal/utils"
 	"fmt"
 	"strings"
 
@@ -23,10 +24,11 @@ const (
 )
 
 type Model struct {
-	config         *config.Config
-	apiKeyInput    textinput.Model
-	workspaceInput textinput.Model
-	workspaces     []models.Workspace
+	config            *config.Config
+	apiKeyInput       textinput.Model
+	workspaceInput    textinput.Model
+	workspaces        []models.Workspace
+	selectedWorkspace models.Workspace
 
 	currentIndex            focusIndex
 	saving                  bool
@@ -43,12 +45,10 @@ func New(cfg *config.Config) Model {
 	apiKey.Focus()
 	apiKey.CharLimit = 64
 	apiKey.Width = 50
-	apiKey.EchoMode = textinput.EchoPassword
-	apiKey.EchoCharacter = '•'
+	apiKey.EchoMode = textinput.EchoNormal
 
 	if cfg.APIKey != "" {
 		apiKey.SetValue(cfg.APIKey)
-		apiKey.Blur()
 	}
 
 	workspace := textinput.New()
@@ -105,16 +105,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, m.updateFocus()
 
 		case "enter":
-			switch m.currentIndex {
-			case workspaceInput:
-				// Show workspace list if we have an API key
-				if m.apiKeyInput.Value() != "" {
-					m.showWorkspacesList = true
-					return m, m.fetchWorkspaces()
-				}
+			if !m.showWorkspacesList {
+				switch m.currentIndex {
+				case workspaceInput:
+					// Show workspace list if we have an API key
+					if m.apiKeyInput.Value() != "" {
+						m.showWorkspacesList = true
+						return m, m.fetchWorkspaces()
+					}
 
-			case saveButton:
-				return m, m.saveConfig()
+				case saveButton:
+					debug.Log("Saving configuration...")
+					return m, m.getUserInfo()
+				}
+			} else if m.showWorkspacesList {
+				debug.Log("Workspace selected index: %d", m.selectedWorkespaceIndex)
+				if len(m.workspaces) > 0 {
+					m.selectedWorkspace = m.workspaces[m.selectedWorkespaceIndex]
+					m.workspaceInput.SetValue(m.selectedWorkspace.Name)
+					m.showWorkspacesList = false
+					m.selectedWorkespaceIndex = 0
+				}
+				return m, nil
 			}
 
 		case "esc":
@@ -134,19 +146,29 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 						m.selectedWorkespaceIndex--
 					}
 				case "enter":
-					if len(m.workspaces) > 0 {
-						selectedWorkspace := m.workspaces[m.selectedWorkespaceIndex]
-						m.workspaceInput.SetValue(selectedWorkspace.Name)
-						m.showWorkspacesList = false
-						m.selectedWorkespaceIndex = 0
-					}
-					return m, nil
+					// debug.Log("Workspace selected index: %d", m.selectedWorkespaceIndex)
+					// if len(m.workspaces) > 0 {
+					// 	selectedWorkspace := m.workspaces[m.selectedWorkespaceIndex]
+					// 	m.workspaceInput.SetValue(selectedWorkspace.Name)
+					// 	m.showWorkspacesList = false
+					// 	m.selectedWorkespaceIndex = 0
+					// }
+					// return m, nil
 				}
 			}
 		}
 
+	case messages.UserLoadedMsg:
+		m.userId = msg.UserId
+		m.config.APIKey = m.apiKeyInput.Value()
+		m.config.UserId = msg.UserId
+		m.config.WorkspaceId = m.selectedWorkspace.ID
+		m.config.WorkspaceName = m.selectedWorkspace.Name
+		return m, m.saveConfig()
+
 	case messages.WorkspacesLoadedMsg:
 		m.workspaces = msg.Workspaces
+		m.workspaces = append(m.workspaces, models.Workspace{ID: "", Name: "<None>"})
 		m.saving = false
 		return m, nil
 
@@ -251,10 +273,22 @@ func (m Model) renderLabel(label string, index focusIndex) string {
 
 // Helper to render inputs with focus style
 func (m Model) renderInput(input textinput.Model, index focusIndex) string {
-	if m.currentIndex == index {
-		return styles.FocusedInputStyle.Render(input.View())
+	rendered := input.View()
+
+	// For API key, mask all but last 4 characters
+	if index == apiKeyInput {
+		val := input.Value()
+		if len(val) > 4 {
+			masked := strings.Repeat("*", len(val)-4) + val[len(val)-4:]
+			rendered = masked
+		} else {
+			rendered = strings.Repeat("*", len(val))
+		}
 	}
-	return styles.BlurredInputStyle.Render(input.View())
+	if m.currentIndex == index {
+		return styles.FocusedInputStyle.Render(rendered)
+	}
+	return styles.BlurredInputStyle.Render(rendered)
 }
 
 // Helper to render the save button with focus style
@@ -347,13 +381,18 @@ func (m Model) fetchWorkspaces() tea.Cmd {
 	}
 }
 
+func (m Model) getUserInfo() tea.Cmd {
+	return api.FetchUserInfo(m.apiKeyInput.Value())
+}
+
 // Helper to save the configuration
 func (m Model) saveConfig() tea.Cmd {
 	return func() tea.Msg {
 		m.saving = true
 		return messages.ConfigSavedMsg{
-			Config: m.config,
-			UserId: m.userId,
+			Config:      m.config,
+			UserId:      m.userId,
+			WorkspaceId: m.selectedWorkspace.ID,
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	debug "clockify-app/internal/utils"
 
 	// "clockify-app/internal/views/entries"
 	// "clockify-app/internal/views/reports"
@@ -102,10 +103,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+	case messages.UserLoadedMsg:
+		debug.Log("User ID loaded: %s", msg.UserId)
+		m.userId = msg.UserId
+		m.settings, cmd = m.settings.Update(msg)
+		return m, cmd
+
 	case messages.ConfigSavedMsg:
 		m.config = msg.Config
 		m.userId = msg.UserId
 		m.workspaceId = msg.WorkspaceId
+		_ = m.config.Save()
 		return m, nil
 
 	case messages.ProjectsLoadedMsg:

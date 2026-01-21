@@ -22,6 +22,10 @@ type ConfigLoadedMsg struct {
 // Data Loading messages
 // =====================================
 
+type UserLoadedMsg struct {
+	UserId string
+}
+
 type ProjectsLoadedMsg struct {
 	Projects []models.Project
 }
