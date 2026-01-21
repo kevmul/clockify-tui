@@ -68,13 +68,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.entries = msg.Entries
 		items := make([]list.Item, len(m.entries))
 		for i, entry := range m.entries {
+			description := entry.Description
+			if description == "" {
+				description = "(No Description)"
+			}
 			projectName := "No Project"
 			project, _ := utils.FindProjectById(m.projects, entry.ProjectID)
 			if project.ID != "" {
 				projectName = fmt.Sprintf("%s - %s", project.Name, project.ClientName)
 			}
 			items[i] = item{
-				title: entry.Description,
+				title: description,
 				desc: fmt.Sprintf(
 					"%s  %s - %s (%s)",
 					entry.TimeInterval.Start.Format("Jan 02 2006"),
