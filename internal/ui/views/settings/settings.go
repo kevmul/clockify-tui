@@ -168,7 +168,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case messages.WorkspacesLoadedMsg:
 		m.workspaces = msg.Workspaces
-		m.workspaces = append(m.workspaces, models.Workspace{ID: "", Name: "<None>"})
 		m.saving = false
 		return m, nil
 
@@ -294,15 +293,12 @@ func (m Model) renderInput(input textinput.Model, index focusIndex) string {
 // Helper to render the save button with focus style
 func (m Model) renderSaveButton() string {
 	label := " Save Configuration "
-	// style := lipgloss.NewStyle().Padding(0, 2)
 	if m.currentIndex == saveButton {
-		// style = style.Background(ui.Primary).Foreground(ui.Background).Bold(true)
 		return styles.FocusedInputStyle.
 			Width(len(label)).
 			Align(lipgloss.Center).
 			Render(label)
 	}
-	// style = style.Background(ui.Muted).Foreground(ui.Background)
 	return styles.BlurredInputStyle.
 		Width(len(label)).
 		Align(lipgloss.Center).

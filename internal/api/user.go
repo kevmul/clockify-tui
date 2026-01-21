@@ -3,7 +3,6 @@ package api
 import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
-	debug "clockify-app/internal/utils"
 	"encoding/json"
 	"fmt"
 
@@ -32,7 +31,6 @@ func (c *Client) GetUserInfo() (*models.User, error) {
 // fetchUserInfo returns a command that fetches user information
 // When complete, it sends a userInfoMsg back to Update()
 func FetchUserInfo(apiKey string) tea.Cmd {
-	debug.Log("Fetching user info from Clockify API...")
 	return func() tea.Msg {
 		// Create API client and fetch user info
 		client := NewClient(apiKey)

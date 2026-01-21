@@ -1,14 +1,14 @@
 package ui
 
 import (
+	"clockify-app/internal/api"
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	debug "clockify-app/internal/utils"
-
-	// "clockify-app/internal/views/entries"
-	// "clockify-app/internal/views/reports"
+	// "clockify-app/internal/ui/views/reports"
 	"clockify-app/internal/ui/components/modal"
+	"clockify-app/internal/ui/views/entries"
 	"clockify-app/internal/ui/views/settings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -35,7 +35,7 @@ type Model struct {
 
 	// View models
 	settings settings.Model
-	// entries  entries.Model
+	entries  entries.Model
 	// reports  reports.Model
 
 	// Modal state
@@ -53,11 +53,18 @@ type Model struct {
 func NewModel() Model {
 	cfg, _ := config.LoadConfig()
 
+	// Start at settings if no config
+	currentView := SettingsView
+
+	if cfg.APIKey != "" && cfg.WorkspaceId != "" {
+		currentView = EntriesView
+	}
+
 	return Model{
 		config:      cfg,
-		currentView: SettingsView, // Start at settings if no config
+		currentView: currentView,
 		settings:    settings.New(cfg),
-		// entries:     entries.New(),
+		entries:     entries.New(cfg),
 		// reports:     reports.New(),
 		ready: false,
 	}
@@ -65,9 +72,28 @@ func NewModel() Model {
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
+		m.initializeFirstViewCmd(),
+		// settings.Init(),
 		tea.EnterAltScreen,
-		settings.Init(),
 	)
+}
+
+func (m Model) initializeFirstViewCmd() tea.Cmd {
+	switch m.currentView {
+	case SettingsView:
+		return settings.Init()
+	case EntriesView:
+		return tea.Sequence(
+			api.FetchProjects(
+				m.config.APIKey,
+				m.config.WorkspaceId,
+			),
+			m.entries.Init(),
+		)
+	case ReportsView:
+		// return m.reports.Init()
+	}
+	return nil
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -87,14 +113,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "ctrl+c", "q":
 				return m, tea.Quit
 			case "1":
-				m.currentView = SettingsView
-				return m, nil
-			case "2":
 				m.currentView = EntriesView
-				// return m, m.entries.Init()
-				return m, nil // TEMP
-			case "3":
+				return m, m.entries.Init()
+			case "2":
 				m.currentView = ReportsView
+				return m, nil
+			case "3":
+				m.currentView = SettingsView
 				return m, nil
 			case "?":
 				m.showModal = true
@@ -104,7 +129,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case messages.UserLoadedMsg:
-		debug.Log("User ID loaded: %s", msg.UserId)
 		m.userId = msg.UserId
 		m.settings, cmd = m.settings.Update(msg)
 		return m, cmd
@@ -118,13 +142,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
-		return m, nil
+		m.entries, cmd = m.entries.Update(msg)
+		return m, cmd
 
 	case messages.EntrySavedMsg:
 		m.showModal = false
-		// m.entries, cmd = m.entries.Update(msg)
+		m.entries, cmd = m.entries.Update(msg)
 		// return m, cmd
 		return m, nil // TEMP
+
+	case messages.EntriesLoadedMsg:
+		debug.Log("First Entry %+v", msg.Entries[0])
+		m.entries, cmd = m.entries.Update(msg)
+		return m, cmd
 
 	case messages.ModalClosedMsg:
 		m.showModal = false
@@ -142,7 +172,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case SettingsView:
 		m.settings, cmd = m.settings.Update(msg)
 	case EntriesView:
-		// m.entries, cmd = m.entries.Update(msg)
+		m.entries, cmd = m.entries.Update(msg)
 	case ReportsView:
 		// m.reports, cmd = m.reports.Update(msg)
 	}
@@ -163,7 +193,7 @@ func (m Model) View() string {
 	case SettingsView:
 		view = m.settings.View()
 	case EntriesView:
-		// view = m.entries.View()
+		view = m.entries.View()
 	case ReportsView:
 		// view = m.reports.View()
 	}
@@ -174,4 +204,8 @@ func (m Model) View() string {
 	}
 
 	return view
+}
+
+func (m Model) Shutdown() tea.Cmd {
+	return tea.ExitAltScreen
 }
