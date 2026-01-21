@@ -37,6 +37,7 @@ type Model struct {
 	userId                  string
 	selectedWorkespaceIndex int
 	showWorkspacesList      bool
+	apiKeyLocked            bool
 }
 
 func New(cfg *config.Config) Model {
@@ -47,8 +48,11 @@ func New(cfg *config.Config) Model {
 	apiKey.Width = 50
 	apiKey.EchoMode = textinput.EchoNormal
 
+	apiKeyLocked := false
+
 	if cfg.APIKey != "" {
 		apiKey.SetValue(cfg.APIKey)
+		apiKeyLocked = true // Lock API key input if already set
 	}
 
 	workspace := textinput.New()
@@ -67,6 +71,7 @@ func New(cfg *config.Config) Model {
 		workspaceInput: workspace,
 		currentIndex:   apiKeyInput,
 		workspaces:     []models.Workspace{},
+		apiKeyLocked:   apiKeyLocked,
 	}
 }
 
@@ -107,6 +112,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "enter":
 			if !m.showWorkspacesList {
 				switch m.currentIndex {
+				case apiKeyInput:
+					// Toggle API key input lock
+					if m.apiKeyLocked {
+						m.apiKeyLocked = false
+						m.saved = false
+					} else if m.apiKeyInput.Value() != "" {
+						m.apiKeyLocked = true
+					}
+
 				case workspaceInput:
 					// Show workspace list if we have an API key
 					if m.apiKeyInput.Value() != "" {
@@ -188,6 +202,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	if !m.showWorkspacesList {
 		switch m.currentIndex {
 		case apiKeyInput:
+			// Only update if not locked
+			if m.apiKeyLocked {
+				break
+			}
 			m.apiKeyInput, cmd = m.apiKeyInput.Update(msg)
 		case workspaceInput:
 			m.workspaceInput, cmd = m.workspaceInput.Update(msg)
@@ -209,7 +227,11 @@ func (m Model) View() string {
 	b.WriteString("\n")
 	b.WriteString(m.renderInput(m.apiKeyInput, apiKeyInput))
 	b.WriteString("\n")
-	b.WriteString(styles.SubtitleStyle.Render(" Get your API key from https://clockify.me/user/settings"))
+	if m.apiKeyLocked {
+		b.WriteString(styles.SubtitleStyle.Render("  🔒 Press Enter to edit • Get your API key from: https://app.clockify.me/user/settings"))
+	} else {
+		b.WriteString(styles.SubtitleStyle.Render("  Get your API key from: https://app.clockify.me/user/settings"))
+	}
 	b.WriteString("\n\n")
 
 	// Workspace Input
