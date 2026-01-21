@@ -5,13 +5,18 @@ import (
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	"clockify-app/internal/styles"
 	debug "clockify-app/internal/utils"
+	"golang.org/x/term"
+	"os"
+
 	// "clockify-app/internal/ui/views/reports"
 	"clockify-app/internal/ui/components/modal"
 	"clockify-app/internal/ui/views/entries"
 	"clockify-app/internal/ui/views/settings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type View int
@@ -186,6 +191,13 @@ func (m Model) View() string {
 		return "Loading..."
 	}
 
+	// Create a top navigation bar
+	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
+
+	// Tabs
+	navBar := m.RenderNavBar("entries", physicalWidth)
+
+	// The actual View
 	var view string
 
 	// Render active view
@@ -203,9 +215,51 @@ func (m Model) View() string {
 		view += modal.Overlay(view, m.modal.View(), m.width, m.height)
 	}
 
-	return view
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		navBar,
+		view,
+	)
 }
 
 func (m Model) Shutdown() tea.Cmd {
 	return tea.ExitAltScreen
+}
+
+// Example helper function to render a tab
+func RenderTab(label, key string, isActive bool) string {
+	keyStyle := lipgloss.NewStyle().Foreground(styles.Muted)
+
+	if isActive {
+		keyStyle := lipgloss.NewStyle().Foreground(styles.Primary)
+		return styles.ActiveTabStyle.Render(keyStyle.Render(key) + " " + label)
+	}
+
+	return styles.InactiveTabStyle.Render(keyStyle.Render(key) + " " + label)
+}
+
+// Example helper function to render the full nav bar
+func (m Model) RenderNavBar(activeTab string, docWidth int) string {
+
+	entries := RenderTab("entries", "1", m.currentView == EntriesView)
+	reports := RenderTab("reports", "2", m.currentView == ReportsView)
+	settings := RenderTab("settings", "3", m.currentView == SettingsView)
+
+	sep := styles.SeparatorStyle.Render("|")
+
+	leftSide := lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		entries,
+		sep,
+		reports,
+		sep,
+		settings,
+	)
+
+	fullNav := lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		leftSide,
+	)
+
+	return styles.NavContainerStyle.Render(fullNav)
 }

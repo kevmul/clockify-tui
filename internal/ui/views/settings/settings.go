@@ -144,6 +144,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 
 		case "esc":
+
 			m.showWorkspacesList = false
 			m.selectedWorkespaceIndex = 0
 
@@ -159,15 +160,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					if m.selectedWorkespaceIndex > 0 {
 						m.selectedWorkespaceIndex--
 					}
-				case "enter":
-					// debug.Log("Workspace selected index: %d", m.selectedWorkespaceIndex)
-					// if len(m.workspaces) > 0 {
-					// 	selectedWorkspace := m.workspaces[m.selectedWorkespaceIndex]
-					// 	m.workspaceInput.SetValue(selectedWorkspace.Name)
-					// 	m.showWorkspacesList = false
-					// 	m.selectedWorkespaceIndex = 0
-					// }
-					// return m, nil
 				}
 			}
 		}

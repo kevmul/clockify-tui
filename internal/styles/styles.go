@@ -4,12 +4,13 @@ import "github.com/charmbracelet/lipgloss"
 
 var (
 	// Colors
-	Primary   = lipgloss.Color("#7C3AED")
-	Secondary = lipgloss.Color("#EC4899")
-	Success   = lipgloss.Color("#10B981")
-	Error     = lipgloss.Color("#EF4444")
-	Warning   = lipgloss.Color("#F59E0B")
-	Muted     = lipgloss.Color("#6B7280")
+	Primary    = lipgloss.Color("#7C3AED")
+	Secondary  = lipgloss.Color("#EC4899")
+	Success    = lipgloss.Color("#10B981")
+	Error      = lipgloss.Color("#EF4444")
+	Warning    = lipgloss.Color("#F59E0B")
+	Muted      = lipgloss.Color("#6B7280")
+	Background = lipgloss.Color("#1E1E1E")
 
 	// Text styles
 	TitleStyle = lipgloss.NewStyle().
@@ -71,4 +72,24 @@ var (
 	KeyStyle = lipgloss.NewStyle().
 			Foreground(Primary).
 			Bold(true)
+
+	// Tabs.
+	// Container for the entire navigation bar
+	NavContainerStyle = lipgloss.NewStyle().
+				BorderStyle(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("#333333")).
+				MarginBottom(1)
+
+	ActiveTabStyle = lipgloss.NewStyle().
+			Foreground(Primary).
+			Padding(0, 2).
+			Bold(true)
+
+	InactiveTabStyle = lipgloss.NewStyle().
+				Padding(0, 2).
+				Foreground(Muted)
+
+	// Tab separator style
+	SeparatorStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#333333"))
 )

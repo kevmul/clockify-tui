@@ -24,10 +24,16 @@ type Model struct {
 }
 
 func New(cfg *config.Config) Model {
+	list := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	list.Title = "Clockify Entries"
+	list.SetShowStatusBar(true)
+	list.SetFilteringEnabled(true)
+	list.SetShowHelp(false)
+
 	return Model{
 		config:  cfg,
 		entries: []models.Entry{},
-		list:    list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		list:    list,
 	}
 }
 
@@ -48,7 +54,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	// Set the list size when the window size changes
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v)
+		m.list.SetSize(msg.Width-h, msg.Height-v-4)
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -89,7 +95,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 		}
 		m.list.SetItems(items)
-		m.list.Title = "Time Entries"
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
@@ -105,7 +110,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-var docStyle = lipgloss.NewStyle().Margin(1, 2)
+var docStyle = lipgloss.NewStyle()
 
 type item struct {
 	title, desc string
