@@ -3,6 +3,7 @@ package modal
 import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	"clockify-app/internal/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -75,17 +76,27 @@ func (m Model) View() string {
 	case HelpModal:
 		// return ui.ModalStyle.Render(m.help.View())
 	}
-	return ""
+	return "MODAL"
 }
 
 // Overlay renders a modal on top of existing content
 func Overlay(base, modal string, width, height int) string {
-	return lipgloss.Place(
-		width, height,
-		lipgloss.Center,
-		lipgloss.Center,
-		modal,
-		lipgloss.WithWhitespaceChars("░"),
-		lipgloss.WithWhitespaceForeground(lipgloss.Color("#1a1a1a")),
-	)
+	dialogBoxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("#874BFD")).
+		Padding(1, 0).
+		BorderTop(true).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderBottom(true)
+	// return lipgloss.Place(
+	// 	width, height,
+	// 	lipgloss.Center,
+	// 	lipgloss.Center,
+	// 	base+dialogBoxStyle.Render(modal),
+	// 	lipgloss.WithWhitespaceChars("░"),
+	// 	// lipgloss.WithWhitespaceChars(" "),
+	// 	lipgloss.WithWhitespaceForeground(lipgloss.Color("#1a1a1a")),
+	// )
+	return utils.PlaceOverlay(width, height, dialogBoxStyle.Render(modal), base, true)
 }

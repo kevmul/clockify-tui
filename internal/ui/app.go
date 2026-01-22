@@ -7,8 +7,9 @@ import (
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
 	debug "clockify-app/internal/utils"
-	"golang.org/x/term"
 	"os"
+
+	"golang.org/x/term"
 
 	// "clockify-app/internal/ui/views/reports"
 	"clockify-app/internal/ui/components/modal"
@@ -212,7 +213,7 @@ func (m Model) View() string {
 
 	// Overlay modal if showing
 	if m.showModal && m.modal != nil {
-		view += modal.Overlay(view, m.modal.View(), m.width, m.height)
+		view = modal.Overlay(view, m.modal.View(), m.width, m.height/3)
 	}
 
 	return lipgloss.JoinVertical(
