@@ -7,6 +7,7 @@ import (
 	"clockify-app/internal/models"
 	"clockify-app/internal/utils"
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -74,10 +75,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.entries = msg.Entries
 		items := make([]list.Item, len(m.entries))
 		for i, entry := range m.entries {
+			// Get the description or a placeholder
 			description := entry.Description
 			if description == "" {
 				description = "(No Description)"
 			}
+			// Get the project name or a default
 			projectName := "No Project"
 			project, _ := utils.FindProjectById(m.projects, entry.ProjectID)
 			if project.ID != "" {
@@ -87,9 +90,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				title: description,
 				desc: fmt.Sprintf(
 					"%s  %s - %s (%s)",
-					entry.TimeInterval.Start.Format("Jan 02 2006"),
-					entry.TimeInterval.Start.Format("3:04PM"),
-					entry.TimeInterval.End.Format("3:04PM"),
+
+					entry.TimeInterval.Start.In(time.Local).Format("Jan 02 2006"),
+					entry.TimeInterval.Start.In(time.Local).Format("3:04PM"),
+					entry.TimeInterval.End.In(time.Local).Format("3:04PM"),
 					projectName,
 				),
 			}
