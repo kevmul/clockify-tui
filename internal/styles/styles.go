@@ -55,6 +55,19 @@ var (
 				BorderForeground(Muted).
 				Padding(0, 1)
 
+	ButtonStyle = lipgloss.NewStyle().
+			Background(Muted).
+			Foreground(lipgloss.Color("#FFFFFF")).
+			Padding(0, 2).
+			Bold(true)
+
+	ActiveButtonStyle = lipgloss.NewStyle().
+				Background(Secondary).
+				Foreground(lipgloss.Color("#FFFFFF")).
+				Underline(true).
+				Padding(0, 2).
+				Bold(true)
+
 	// List styles
 	SelectedItemStyle = lipgloss.NewStyle().
 				Foreground(Primary).

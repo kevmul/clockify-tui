@@ -306,15 +306,15 @@ func (m Model) renderInput(input textinput.Model, index focusIndex) string {
 
 // Helper to render the save button with focus style
 func (m Model) renderSaveButton() string {
-	label := " Save Configuration "
+	label := "Save Configuration"
 	if m.currentIndex == saveButton {
-		return styles.FocusedInputStyle.
-			Width(len(label)).
+		return styles.ActiveButtonStyle.
+			// Width(len(label)).
 			Align(lipgloss.Center).
 			Render(label)
 	}
-	return styles.BlurredInputStyle.
-		Width(len(label)).
+	return styles.ButtonStyle.
+		// Width(len(label)).
 		Align(lipgloss.Center).
 		Render(label)
 }
