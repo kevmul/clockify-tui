@@ -12,6 +12,7 @@ import (
 
 	"clockify-app/internal/ui/components/modal"
 	"clockify-app/internal/ui/views/entries"
+	"clockify-app/internal/ui/views/reports"
 	"clockify-app/internal/ui/views/settings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -38,6 +39,7 @@ type Model struct {
 	// View models
 	settings settings.Model
 	entries  entries.Model
+	reports  reports.Model
 
 	// Modal state
 	modal     *modal.Model
@@ -66,6 +68,7 @@ func NewModel() Model {
 		currentView: currentView,
 		settings:    settings.New(cfg),
 		entries:     entries.New(cfg),
+		reports:     reports.New(cfg),
 		ready:       false,
 	}
 }
@@ -90,6 +93,8 @@ func (m Model) initializeFirstViewCmd() tea.Cmd {
 			),
 			m.entries.Init(),
 		)
+	case ReportsView:
+		return m.reports.Init()
 	}
 	return nil
 }
@@ -114,6 +119,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.currentView = EntriesView
 				return m, m.entries.Init()
 			case "2":
+				m.currentView = ReportsView
+				return m, m.reports.Init()
+			case "3":
 				m.currentView = SettingsView
 				return m, nil
 			case "n":
@@ -192,6 +200,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.settings, cmd = m.settings.Update(msg)
 	case EntriesView:
 		m.entries, cmd = m.entries.Update(msg)
+	case ReportsView:
+		m.reports, cmd = m.reports.Update(msg)
 	}
 
 	cmds = append(cmds, cmd)
@@ -218,6 +228,8 @@ func (m Model) View() string {
 		view = m.settings.View()
 	case EntriesView:
 		view = m.entries.View()
+	case ReportsView:
+		view = m.reports.View()
 	}
 
 	// Overlay modal if showing

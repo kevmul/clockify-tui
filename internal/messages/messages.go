@@ -66,6 +66,14 @@ type EntryUpdatedMsg struct {
 }
 
 // =====================================
+// Report messages
+// =====================================
+
+type ReportsLoadedMsg struct {
+	Reports []models.Report
+}
+
+// =====================================
 // Modal messages
 // =====================================
 
