@@ -54,6 +54,9 @@ type EntryDeletedMsg struct {
 	EntryId string
 }
 
+type EntryUpdateStartedMsg struct {
+	Entry models.Entry
+}
 type EntryUpdatedMsg struct {
 	Entries models.Entry
 }

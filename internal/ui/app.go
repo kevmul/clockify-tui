@@ -6,7 +6,6 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
-	debug "clockify-app/internal/utils"
 	"os"
 
 	"golang.org/x/term"
@@ -34,7 +33,8 @@ type Model struct {
 	userId      string
 	workspaceId string
 	projects    []models.Project
-	tasks       []models.Task
+	// tasks       []models.Task
+	// timeEntries []models.Entry
 
 	// Current View
 	currentView View
@@ -127,6 +127,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "3":
 				m.currentView = SettingsView
 				return m, nil
+			case "n":
+				m.showModal = true
+				m.modal = modal.NewEntryForm(m.config, m.projects)
+				return m, nil
 			case "?":
 				m.showModal = true
 				m.modal = modal.NewHelp()
@@ -158,9 +162,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil // TEMP
 
 	case messages.EntriesLoadedMsg:
-		debug.Log("First Entry %+v", msg.Entries[0])
 		m.entries, cmd = m.entries.Update(msg)
 		return m, cmd
+
+	case messages.EntryUpdateStartedMsg:
+		m.showModal = true
+		m.modal = modal.UpdateEntryForm(m.config, m.projects, msg.Entry)
+
+		return m, nil
 
 	case messages.ModalClosedMsg:
 		m.showModal = false

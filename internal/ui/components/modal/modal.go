@@ -1,12 +1,15 @@
 package modal
 
 import (
+	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	"clockify-app/internal/styles"
+	"clockify-app/internal/ui/components/entryform"
 	"clockify-app/internal/utils"
+	debug "clockify-app/internal/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type ModalType int
@@ -18,15 +21,25 @@ const (
 
 type Model struct {
 	modalType ModalType
-	// entryForm *entryform.Model
+	entryForm *entryform.Model
 	// help      *help.Model
 }
 
-func NewEntryFrom(projects []models.Project, tasks []models.Task) *Model {
-	// form := entryform.New(projects, tasks)
+func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
+	form := entryform.New(cfg, projects)
 	return &Model{
 		modalType: EntryModal,
-		// entryForm: form,
+		entryForm: &form,
+	}
+}
+
+func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
+	debug.Log("Updating entry form in modal")
+	form := entryform.New(cfg, projects)
+	form = form.UpdateEntry(entry)
+	return &Model{
+		modalType: EntryModal,
+		entryForm: &form,
 	}
 }
 
@@ -41,7 +54,7 @@ func NewHelp() *Model {
 func (m Model) Init() tea.Cmd {
 	switch m.modalType {
 	case EntryModal:
-		// return m.entryForm.Init()
+		return m.entryForm.Init()
 	case HelpModal:
 		// return m.help.Init()
 	}
@@ -51,7 +64,8 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "esc" {
+		// We might move this to the modal themselves later...
+		if msg.String() == "esc" || msg.String() == "q" || msg.String() == "ctrl+c" {
 			return m, func() tea.Msg {
 				return messages.ModalClosedMsg{}
 			}
@@ -61,7 +75,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch m.modalType {
 	case EntryModal:
-		// *m.entryForm, cmd = m.entryForm.Update(msg)
+		*m.entryForm, cmd = m.entryForm.Update(msg)
 	case HelpModal:
 		// *m.help, cmd = m.help.Update(msg)
 	}
@@ -72,7 +86,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	switch m.modalType {
 	case EntryModal:
-		// return ui.ModalStyle.Render(m.entryForm.View())
+		return m.entryForm.View()
 	case HelpModal:
 		// return ui.ModalStyle.Render(m.help.View())
 	}
@@ -81,14 +95,14 @@ func (m Model) View() string {
 
 // Overlay renders a modal on top of existing content
 func Overlay(base, modal string, width, height int) string {
-	dialogBoxStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#874BFD")).
-		Padding(1, 0).
-		BorderTop(true).
-		BorderLeft(true).
-		BorderRight(true).
-		BorderBottom(true)
+	// dialogBoxStyle := lipgloss.NewStyle().
+	// 	Border(lipgloss.RoundedBorder()).
+	// 	BorderForeground(lipgloss.Color("#874BFD")).
+	// 	Padding(1, 0).
+	// 	BorderTop(true).
+	// 	BorderLeft(true).
+	// 	BorderRight(true).
+	// 	BorderBottom(true)
 	// return lipgloss.Place(
 	// 	width, height,
 	// 	lipgloss.Center,
@@ -98,5 +112,5 @@ func Overlay(base, modal string, width, height int) string {
 	// 	// lipgloss.WithWhitespaceChars(" "),
 	// 	lipgloss.WithWhitespaceForeground(lipgloss.Color("#1a1a1a")),
 	// )
-	return utils.PlaceOverlay(width, height, dialogBoxStyle.Render(modal), base, true)
+	return utils.PlaceOverlay(width, height, styles.ModalStyle.Render(modal), base, true)
 }

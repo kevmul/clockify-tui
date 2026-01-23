@@ -21,3 +21,10 @@ type Entry struct {
 	Billable     bool         `json:"billable"`
 	TagIDs       []string     `json:"tagIds,omitempty"`
 }
+
+type TimeEntryRequest struct {
+	Start       string `json:"start"`
+	End         string `json:"end"`
+	ProjectID   string `json:"projectId"`
+	Description string `json:"description"`
+}

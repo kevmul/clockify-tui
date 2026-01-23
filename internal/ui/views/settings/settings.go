@@ -6,7 +6,6 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
-	debug "clockify-app/internal/utils"
 	"fmt"
 	"strings"
 
@@ -129,11 +128,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					}
 
 				case saveButton:
-					debug.Log("Saving configuration...")
 					return m, m.getUserInfo()
 				}
 			} else if m.showWorkspacesList {
-				debug.Log("Workspace selected index: %d", m.selectedWorkespaceIndex)
 				if len(m.workspaces) > 0 {
 					m.selectedWorkspace = m.workspaces[m.selectedWorkespaceIndex]
 					m.workspaceInput.SetValue(m.selectedWorkspace.Name)

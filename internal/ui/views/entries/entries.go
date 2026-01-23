@@ -6,6 +6,7 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/utils"
+	debug "clockify-app/internal/utils"
 	"fmt"
 	"time"
 
@@ -17,9 +18,9 @@ import (
 type Model struct {
 	config   *config.Config
 	projects []models.Project
-	tasks    []models.Task
-	entries  []models.Entry
-	cursor   int
+	// tasks    []models.Task
+	entries []models.Entry
+	cursor  int
 
 	list list.Model
 }
@@ -68,6 +69,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			// Handle up navigation
 			if m.cursor > 0 {
 				m.cursor--
+			}
+		case "e":
+			// Edit the selected entry
+			debug.Log("Edit key pressed")
+			if len(m.entries) > 0 {
+				selectedEntry := m.entries[m.cursor]
+				// Open the edit modal (not implemented here)
+				return m, func() tea.Msg {
+					return messages.EntryUpdateStartedMsg{Entry: selectedEntry}
+				}
 			}
 		}
 

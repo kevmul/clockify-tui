@@ -1,0 +1,116 @@
+package entryform
+
+import (
+	"clockify-app/internal/api"
+	"clockify-app/internal/messages"
+	"clockify-app/internal/styles"
+	"fmt"
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+// ================ Confirmation Selection =================
+func (m Model) viewConfirm() string {
+	// Implementation of confirmation view goes here
+	choseDate := m.date.Format("January 2, 2006")
+	choseStart := m.timeStart.Value()
+	choseEnd := m.timeEnd.Value()
+	choseTask := m.taskName.Value()
+	choseProject := m.selectedProj
+
+	confirmationBtn := styles.ActiveButtonStyle
+	confirmationBtnText := "Create"
+	confirmationText := "Press Enter to confirm, or Tab/Shift+Tab to navigate."
+
+	if m.editing {
+		confirmationBtnText = "Update"
+		confirmationText = "Press Enter to update, or Tab/Shift+Tab to navigate."
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Top,
+		styles.TitleStyle.Margin(0, 0).Render("Confirm Time Entry"),
+		styles.SubtitleStyle.Margin(0, 0, 1, 0).Render("Please review your time entry details:"),
+		fmt.Sprintf("📅 Date: %s", choseDate),
+		fmt.Sprintf("⏰ Time: %s - %s", choseStart, choseEnd),
+		fmt.Sprintf("📝 Task: %s", choseTask),
+		fmt.Sprintf("📁 Project: %s (%s)", choseProject.Name, choseProject.ClientName),
+		confirmationBtn.Render(confirmationBtnText),
+		styles.HelpStyle.Render(confirmationText),
+	)
+}
+
+func (m Model) updateConfirm(msg tea.Msg) (Model, tea.Cmd) {
+	// Implementation of confirmation update goes here
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			// Submit the time entry and transition to submission state
+			m.submitting = true
+			if m.editing {
+				// Updating an existing entry
+				return m, m.updateTimeEntry()
+			}
+			return m, m.submitTimeEntry()
+		}
+	}
+	return m, nil
+}
+
+// submitTimeEntry creates a command to submit the time entry
+func (m Model) submitTimeEntry() tea.Cmd {
+	return createTimeEntry(
+		m.apiKey,
+		m.workspaceID,
+		m.selectedProj.ID,
+		m.taskName.Value(),
+		m.timeStart.Value(),
+		m.timeEnd.Value(),
+		m.date,
+	)
+}
+
+func (m Model) updateTimeEntry() tea.Cmd {
+	return updateTimeEntry(
+		m.apiKey,
+		m.workspaceID,
+		m.selectedEntry.ID,
+		m.selectedProj.ID,
+		m.taskName.Value(),
+		m.timeStart.Value(),
+		m.timeEnd.Value(),
+		m.date,
+	)
+}
+
+// createTimeEntry returns a command that creates a time entry
+// When complete, it sends either submitSuccessMsg or errMsg
+func createTimeEntry(apiKey, workspaceID, projectID, description, startTime, endTime string, date time.Time) tea.Cmd {
+	return func() tea.Msg {
+		client := api.NewClient(apiKey)
+		err := client.CreateTimeEntry(workspaceID, projectID, description, startTime, endTime, date)
+
+		if err != nil {
+			return messages.ErrorMsg{Err: err}
+		}
+
+		// Success - return success message
+		return messages.EntrySavedMsg{}
+	}
+}
+
+func updateTimeEntry(apiKey, workspaceID, entryID, projectID, description, startTime, endTime string, date time.Time) tea.Cmd {
+	return func() tea.Msg {
+		client := api.NewClient(apiKey)
+		err := client.UpdateTimeEntry(workspaceID, entryID, projectID, description, startTime, endTime, date)
+
+		if err != nil {
+			return messages.ErrorMsg{Err: err}
+		}
+
+		// Success - return success message
+		return messages.EntrySavedMsg{}
+	}
+}

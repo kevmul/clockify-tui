@@ -86,3 +86,8 @@ func (c *Client) Get(endpoint string) ([]byte, error) {
 func (c *Client) Post(endpoint string, body interface{}) ([]byte, error) {
 	return c.doRequest("POST", endpoint, body)
 }
+
+// put performs a PUT request - convenience wrapper around doRequest
+func (c *Client) Put(endpoint string, body interface{}) ([]byte, error) {
+	return c.doRequest("PUT", endpoint, body)
+}

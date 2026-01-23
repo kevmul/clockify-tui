@@ -13,3 +13,12 @@ func FindProjectById(projects []models.Project, id string) (models.Project, erro
 	}
 	return models.Project{}, strconv.ErrSyntax
 }
+
+func FindEntryById(entries []models.Entry, id string) (models.Entry, error) {
+	for _, entry := range entries {
+		if entry.ID == id {
+			return entry, nil
+		}
+	}
+	return models.Entry{}, strconv.ErrSyntax
+}

@@ -71,8 +71,7 @@ var (
 	// List styles
 	SelectedItemStyle = lipgloss.NewStyle().
 				Foreground(Primary).
-				Bold(true).
-				PaddingLeft(2)
+				Bold(true)
 
 	NormalItemStyle = lipgloss.NewStyle().
 			PaddingLeft(4)
