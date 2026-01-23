@@ -50,6 +50,10 @@ type EntrySavedMsg struct {
 	Entry models.Entry
 }
 
+type EntryDeleteStartedMsg struct {
+	EntryId string
+}
+
 type EntryDeletedMsg struct {
 	EntryId string
 }
@@ -69,6 +73,11 @@ type ModalClosedMsg struct{}
 
 type ShowModalMsg struct {
 	ModalType string // "entry", "help", etc
+}
+
+type ItemDeletedMsg struct {
+	ID   string
+	Type string
 }
 
 // =====================================

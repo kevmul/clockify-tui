@@ -72,12 +72,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 		case "e":
 			// Edit the selected entry
-			debug.Log("Edit key pressed")
 			if len(m.entries) > 0 {
 				selectedEntry := m.entries[m.cursor]
 				// Open the edit modal (not implemented here)
 				return m, func() tea.Msg {
 					return messages.EntryUpdateStartedMsg{Entry: selectedEntry}
+				}
+			}
+		case "d":
+			// Delete the selected entry
+			debug.Log("Delete key pressed")
+			if len(m.entries) > 0 {
+				selectedEntry := m.entries[m.cursor]
+				// Open the delete confirmation modal (not implemented here)
+				return m, func() tea.Msg {
+					return messages.EntryDeleteStartedMsg{EntryId: selectedEntry.ID}
 				}
 			}
 		}
@@ -113,6 +122,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
+
+	case messages.ItemDeletedMsg:
+		if msg.Type == "entry" {
+			c := api.NewClient(m.config.APIKey)
+			err := c.DeleteTimeEntry(m.config.WorkspaceId, msg.ID)
+			if err != nil {
+				return m, func() tea.Msg {
+					return messages.ErrorMsg{Err: err}
+				}
+			}
+			return m, api.FetchEntries(
+				m.config.APIKey,
+				m.config.WorkspaceId,
+				m.config.UserId,
+			)
+		}
+		return m, nil
 
 	case messages.ErrorMsg:
 		// Handle error (could set an error field in the model)

@@ -5,6 +5,7 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
+	"clockify-app/internal/ui/components/confirmation"
 	"clockify-app/internal/ui/components/entryform"
 	"clockify-app/internal/utils"
 	debug "clockify-app/internal/utils"
@@ -16,12 +17,14 @@ type ModalType int
 
 const (
 	EntryModal ModalType = iota
+	DeleteConfirmation
 	HelpModal
 )
 
 type Model struct {
-	modalType ModalType
-	entryForm *entryform.Model
+	modalType          ModalType
+	entryForm          *entryform.Model
+	deleteConfirmation *confirmation.Model
 	// help      *help.Model
 }
 
@@ -34,12 +37,20 @@ func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 }
 
 func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
-	debug.Log("Updating entry form in modal")
 	form := entryform.New(cfg, projects)
 	form = form.UpdateEntry(entry)
 	return &Model{
 		modalType: EntryModal,
 		entryForm: &form,
+	}
+}
+
+func NewDeleteConfirmation(entryId string) *Model {
+	debug.Log("Delete Confirmation Modal Created for Entry ID: %s", entryId)
+	deleteConfirmation := confirmation.New(entryId)
+	return &Model{
+		modalType:          DeleteConfirmation,
+		deleteConfirmation: &deleteConfirmation,
 	}
 }
 
@@ -55,6 +66,8 @@ func (m Model) Init() tea.Cmd {
 	switch m.modalType {
 	case EntryModal:
 		return m.entryForm.Init()
+	case DeleteConfirmation:
+		return m.deleteConfirmation.Init()
 	case HelpModal:
 		// return m.help.Init()
 	}
@@ -76,6 +89,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch m.modalType {
 	case EntryModal:
 		*m.entryForm, cmd = m.entryForm.Update(msg)
+	case DeleteConfirmation:
+		*m.deleteConfirmation, cmd = m.deleteConfirmation.Update(msg)
 	case HelpModal:
 		// *m.help, cmd = m.help.Update(msg)
 	}
@@ -87,6 +102,8 @@ func (m Model) View() string {
 	switch m.modalType {
 	case EntryModal:
 		return m.entryForm.View()
+	case DeleteConfirmation:
+		return m.deleteConfirmation.View()
 	case HelpModal:
 		// return ui.ModalStyle.Render(m.help.View())
 	}

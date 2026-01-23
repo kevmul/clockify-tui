@@ -91,3 +91,8 @@ func (c *Client) Post(endpoint string, body interface{}) ([]byte, error) {
 func (c *Client) Put(endpoint string, body interface{}) ([]byte, error) {
 	return c.doRequest("PUT", endpoint, body)
 }
+
+// delete performs a DELETE request - convenience wrapper around doRequest
+func (c *Client) Delete(endpoint string) ([]byte, error) {
+	return c.doRequest("DELETE", endpoint, nil)
+}

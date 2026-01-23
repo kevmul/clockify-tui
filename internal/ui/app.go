@@ -158,8 +158,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.EntrySavedMsg:
 		m.showModal = false
 		m.entries, cmd = m.entries.Update(msg)
-		// return m, cmd
-		return m, nil // TEMP
+		return m, api.FetchEntries(
+			m.config.APIKey,
+			m.config.WorkspaceId,
+			m.config.UserId,
+		)
 
 	case messages.EntriesLoadedMsg:
 		m.entries, cmd = m.entries.Update(msg)
@@ -168,12 +171,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.EntryUpdateStartedMsg:
 		m.showModal = true
 		m.modal = modal.UpdateEntryForm(m.config, m.projects, msg.Entry)
+		return m, nil
 
+	case messages.EntryDeleteStartedMsg:
+		m.showModal = true
+		m.modal = modal.NewDeleteConfirmation(msg.EntryId)
 		return m, nil
 
 	case messages.ModalClosedMsg:
 		m.showModal = false
 		return m, nil
+
+	case messages.ItemDeletedMsg:
+		m.showModal = false
+		if msg.Type == "entry" {
+			// Let entries view handle the deletion
+			m.entries, cmd = m.entries.Update(msg)
+			return m, cmd
+		}
 	}
 
 	// Route to modal if showing

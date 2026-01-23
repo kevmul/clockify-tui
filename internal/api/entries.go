@@ -97,6 +97,18 @@ func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, description, s
 	return nil
 }
 
+func (c *Client) DeleteTimeEntry(workspaceID, entryID string) error {
+	// Build endpoint and make DELETE request
+	endpoint := fmt.Sprintf("/workspaces/%s/time-entries/%s", workspaceID, entryID)
+	_, err := c.Delete(endpoint)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete time entry: %w", err)
+	}
+
+	return nil
+}
+
 // parseTime converts a time string like "9a" or "3:30p" to a full time.Time
 // It handles various formats: 9a, 9:30a, 9, 9:30
 func parseTime(timeStr string, date time.Time) time.Time {
