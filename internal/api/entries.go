@@ -3,7 +3,6 @@ package api
 import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
-	debug "clockify-app/internal/utils"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -59,7 +58,7 @@ func (c *Client) CreateTimeEntry(workspaceID, projectID, description, startTimeS
 		Start:       startTime.Format(time.RFC3339), // Convert to RFC3339 format
 		End:         endTime.Format(time.RFC3339),
 		ProjectID:   projectID,
-		Description: strings.ToUpper(description),
+		Description: description,
 	}
 
 	// Build endpoint and make POST request
@@ -83,7 +82,7 @@ func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, description, s
 		Start:       startTime.Format(time.RFC3339), // Convert to RFC3339 format
 		End:         endTime.Format(time.RFC3339),
 		ProjectID:   projectID,
-		Description: strings.ToUpper(description),
+		Description: description,
 	}
 
 	// Build endpoint and make PUT request
@@ -99,7 +98,6 @@ func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, description, s
 
 func (c *Client) DeleteTimeEntry(workspaceID, entryID string) error {
 	// Build endpoint and make DELETE request
-	debug.Log("Deleting time entry:", entryID)
 	endpoint := fmt.Sprintf("/workspaces/%s/time-entries/%s", workspaceID, entryID)
 	_, err := c.Delete(endpoint)
 
