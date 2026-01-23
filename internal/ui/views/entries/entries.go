@@ -6,6 +6,7 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/utils"
+	debug "clockify-app/internal/utils"
 	"fmt"
 	"time"
 
@@ -122,9 +123,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.projects = msg.Projects
 
 	case messages.ItemDeletedMsg:
+		debug.Log("Received ItemDeletedMsg: %+v", msg)
 		if msg.Type == "entry" {
 			c := api.NewClient(m.config.APIKey)
 			err := c.DeleteTimeEntry(m.config.WorkspaceId, msg.ID)
+			debug.Log("Deleted entry ID: %s", msg.ID)
+			debug.Log("Error: %w", err)
 			if err != nil {
 				return m, func() tea.Msg {
 					return messages.ErrorMsg{Err: err}

@@ -125,17 +125,14 @@ func (m Model) UpdateEntry(entry models.Entry) Model {
 	return m
 }
 
-// func findIndexOfItem(models []models.Project, itemId string) models.Project {
-//
-// 	for i, model := range models {
-// 		if model.ID == itemId {
-// 			return models[i]
-// 		}
-//
-// }
-
 func (m Model) Init() tea.Cmd {
 	return textinput.Blink
+}
+
+// Set the projects list in the model
+func (m Model) SetProjects(projects []models.Project) Model {
+	m.projects = projects
+	return m
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {

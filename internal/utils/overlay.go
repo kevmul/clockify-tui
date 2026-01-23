@@ -1,208 +1,146 @@
 package utils
 
 import (
-	"bytes"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mattn/go-runewidth"
-	"github.com/muesli/ansi"
-	"github.com/muesli/reflow/truncate"
-	"github.com/muesli/termenv"
 )
 
-// Most of this code is borrowed from
-// https://github.com/charmbracelet/lipgloss/pull/102
-// as well as the lipgloss library, with some modification for what I needed.
+// =======================================
+// Custom overlay function
+// =======================================
 
-// Split a string into lines, additionally returning the size of the widest
-// line.
-func getLines(s string) (lines []string, widest int) {
-	lines = strings.Split(s, "\n")
+func RenderWithModal(height, width int, baseContent string, modal string) string {
+	// Split base content into lines
+	baseLines := strings.Split(baseContent, "\n")
 
-	for _, l := range lines {
-		w := ansi.PrintableRuneWidth(l)
-		if widest < w {
-			widest = w
+	// Ensure we have enough lines for the terminal height
+	for len(baseLines) < height {
+		baseLines = append(baseLines, "")
+	}
+
+	// Render the modal
+	// modalContent := modal.View(width, height)
+	modalContent := modal
+	modalLines := strings.Split(modalContent, "\n")
+
+	// Calculate starting position to center the modal
+	modalHeight := len(modalLines)
+	startRow := (height - modalHeight) / 2
+	if startRow < 0 {
+		startRow = 0
+	}
+
+	// Find the actual width of the modal
+	modalWidth := 0
+	for _, line := range modalLines {
+		lineLen := lipgloss.Width(line)
+		if lineLen > modalWidth {
+			modalWidth = lineLen
 		}
 	}
 
-	return lines, widest
-}
+	startCol := (width - modalWidth) / 2
+	if startCol < 0 {
+		startCol = 0
+	}
 
-// PlaceOverlay places fg on top of bg.
-func PlaceOverlay(
-	x, y int,
-	fg, bg string,
-	shadow bool, opts ...WhitespaceOption,
-) string {
-	fgLines, fgWidth := getLines(fg)
-	bgLines, bgWidth := getLines(bg)
-	bgHeight := len(bgLines)
-	fgHeight := len(fgLines)
+	// Helper to truncate string at visual width (ANSI-aware)
+	truncateAt := func(s string, width int) string {
+		if width <= 0 {
+			return ""
+		}
+		var result strings.Builder
+		currentWidth := 0
+		inEscape := false
 
-	if shadow {
-		var shadowbg string = ""
-		shadowchar := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#333333")).
-			Render("░")
-		for i := 0; i <= fgHeight; i++ {
-			if i == 0 {
-				shadowbg += " " + strings.Repeat(" ", fgWidth) + "\n"
-			} else {
-				shadowbg += " " + strings.Repeat(shadowchar, fgWidth) + "\n"
+		for _, r := range s {
+			if r == '\x1b' {
+				inEscape = true
 			}
-		}
 
-		fg = PlaceOverlay(0, 0, fg, shadowbg, false, opts...)
-		fgLines, fgWidth = getLines(fg)
-		fgHeight = len(fgLines)
-	}
-
-	if fgWidth >= bgWidth && fgHeight >= bgHeight {
-		// FIXME: return fg or bg?
-		return fg
-	}
-	// TODO: allow placement outside of the bg box?
-	x = clamp(x, 0, bgWidth-fgWidth)
-	y = clamp(y, 0, bgHeight-fgHeight)
-
-	ws := &whitespace{}
-	for _, opt := range opts {
-		opt(ws)
-	}
-
-	var b strings.Builder
-	for i, bgLine := range bgLines {
-		if i > 0 {
-			b.WriteByte('\n')
-		}
-		if i < y || i >= y+fgHeight {
-			b.WriteString(bgLine)
-			continue
-		}
-
-		pos := 0
-		if x > 0 {
-			left := truncate.String(bgLine, uint(x))
-			pos = ansi.PrintableRuneWidth(left)
-			b.WriteString(left)
-			if pos < x {
-				b.WriteString(ws.render(x - pos))
-				pos = x
+			if inEscape {
+				result.WriteRune(r)
+				if r == 'm' {
+					inEscape = false
+				}
+				continue
 			}
+
+			if currentWidth >= width {
+				break
+			}
+
+			result.WriteRune(r)
+			currentWidth++
 		}
-
-		fgLine := fgLines[i-y]
-		b.WriteString(fgLine)
-		pos += ansi.PrintableRuneWidth(fgLine)
-
-		right := cutLeft(bgLine, pos)
-		bgWidth := ansi.PrintableRuneWidth(bgLine)
-		rightWidth := ansi.PrintableRuneWidth(right)
-		if rightWidth <= bgWidth-pos {
-			b.WriteString(ws.render(bgWidth - rightWidth - pos))
-		}
-
-		b.WriteString(right)
+		return result.String()
 	}
 
-	return b.String()
-}
+	// Helper to skip first N visual characters (ANSI-aware)
+	skipChars := func(s string, n int) string {
+		if n <= 0 {
+			return s
+		}
 
-// cutLeft cuts printable characters from the left.
-// This function is heavily based on muesli's ansi and truncate packages.
-func cutLeft(s string, cutWidth int) string {
-	var (
-		pos    int
-		isAnsi bool
-		ab     bytes.Buffer
-		b      bytes.Buffer
-	)
-	for _, c := range s {
-		var w int
-		if c == ansi.Marker || isAnsi {
-			isAnsi = true
-			ab.WriteRune(c)
-			if ansi.IsTerminator(c) {
-				isAnsi = false
-				if bytes.HasSuffix(ab.Bytes(), []byte("[0m")) {
-					ab.Reset()
+		skipped := 0
+		inEscape := false
+		var result strings.Builder
+		started := false
+
+		for _, r := range s {
+			if r == '\x1b' {
+				inEscape = true
+			}
+
+			if started || inEscape {
+				result.WriteRune(r)
+			}
+
+			if inEscape {
+				if r == 'm' {
+					inEscape = false
+				}
+				continue
+			}
+
+			if !started {
+				skipped++
+				if skipped > n {
+					started = true
+					result.WriteRune(r)
 				}
 			}
-		} else {
-			w = runewidth.RuneWidth(c)
 		}
+		return result.String()
+	}
 
-		if pos >= cutWidth {
-			if b.Len() == 0 {
-				if ab.Len() > 0 {
-					b.Write(ab.Bytes())
-				}
-				if pos-cutWidth > 1 {
-					b.WriteByte(' ')
-					continue
-				}
+	// Overlay modal lines onto base lines
+	for i, modalLine := range modalLines {
+		row := startRow + i
+		if row >= 0 && row < len(baseLines) {
+			baseLine := baseLines[row]
+			baseWidth := lipgloss.Width(baseLine)
+
+			// Extract left part (before modal)
+			leftPart := truncateAt(baseLine, startCol)
+
+			// Extract right part (after modal)
+			endCol := startCol + lipgloss.Width(modalLine)
+			var rightPart string
+			if endCol < baseWidth {
+				rightPart = skipChars(baseLine, endCol)
 			}
-			b.WriteRune(c)
+
+			// Pad if needed
+			leftWidth := lipgloss.Width(leftPart)
+			if leftWidth < startCol {
+				leftPart += strings.Repeat(" ", startCol-leftWidth)
+			}
+
+			baseLines[row] = leftPart + modalLine + rightPart
 		}
-		pos += w
-	}
-	return b.String()
-}
-
-func clamp(v, lower, upper int) int {
-	return min(max(v, lower), upper)
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-type whitespace struct {
-	style termenv.Style
-	chars string
-}
-
-// Render whitespaces.
-func (w whitespace) render(width int) string {
-	if w.chars == "" {
-		w.chars = " "
 	}
 
-	r := []rune(w.chars)
-	j := 0
-	b := strings.Builder{}
-
-	// Cycle through runes and print them into the whitespace.
-	for i := 0; i < width; {
-		b.WriteRune(r[j])
-		j++
-		if j >= len(r) {
-			j = 0
-		}
-		i += ansi.PrintableRuneWidth(string(r[j]))
-	}
-
-	// Fill any extra gaps white spaces. This might be necessary if any runes
-	// are more than one cell wide, which could leave a one-rune gap.
-	short := width - ansi.PrintableRuneWidth(b.String())
-	if short > 0 {
-		b.WriteString(strings.Repeat(" ", short))
-	}
-
-	return w.style.Styled(b.String())
+	return strings.Join(baseLines, "\n")
 }
-
-// WhitespaceOption sets a styling rule for rendering whitespace.
-type WhitespaceOption func(*whitespace)

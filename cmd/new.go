@@ -4,8 +4,11 @@ Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"clockify-app/internal/ui"
 	"fmt"
+	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +18,14 @@ var addCmd = &cobra.Command{
 	Short: "Quickly add a new time entry",
 	Long:  "Add a new time entry without having to start the entier app.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("New called")
+		p := tea.NewProgram(
+			ui.NewSimpleModel(),
+			tea.WithAltScreen(),
+		)
+		if _, err := p.Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 

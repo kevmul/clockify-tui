@@ -3,6 +3,7 @@ package api
 import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	debug "clockify-app/internal/utils"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -98,6 +99,7 @@ func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, description, s
 
 func (c *Client) DeleteTimeEntry(workspaceID, entryID string) error {
 	// Build endpoint and make DELETE request
+	debug.Log("Deleting time entry:", entryID)
 	endpoint := fmt.Sprintf("/workspaces/%s/time-entries/%s", workspaceID, entryID)
 	_, err := c.Delete(endpoint)
 

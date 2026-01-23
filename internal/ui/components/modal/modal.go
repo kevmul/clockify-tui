@@ -24,6 +24,8 @@ type Model struct {
 	modalType          ModalType
 	entryForm          *entryform.Model
 	deleteConfirmation *confirmation.Model
+	// UI
+	width, height int
 	// help      *help.Model
 }
 
@@ -45,7 +47,7 @@ func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models
 }
 
 func NewDeleteConfirmation(entryId string) *Model {
-	deleteConfirmation := confirmation.New(entryId)
+	deleteConfirmation := confirmation.New(entryId, "entry")
 	return &Model{
 		modalType:          DeleteConfirmation,
 		deleteConfirmation: &deleteConfirmation,
@@ -74,6 +76,10 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
 	case tea.KeyMsg:
 		// We might move this to the modal themselves later...
 		if msg.String() == "esc" || msg.String() == "q" || msg.String() == "ctrl+c" {
@@ -110,22 +116,5 @@ func (m Model) View() string {
 
 // Overlay renders a modal on top of existing content
 func Overlay(base, modal string, width, height int) string {
-	// dialogBoxStyle := lipgloss.NewStyle().
-	// 	Border(lipgloss.RoundedBorder()).
-	// 	BorderForeground(lipgloss.Color("#874BFD")).
-	// 	Padding(1, 0).
-	// 	BorderTop(true).
-	// 	BorderLeft(true).
-	// 	BorderRight(true).
-	// 	BorderBottom(true)
-	// return lipgloss.Place(
-	// 	width, height,
-	// 	lipgloss.Center,
-	// 	lipgloss.Center,
-	// 	base+dialogBoxStyle.Render(modal),
-	// 	lipgloss.WithWhitespaceChars("░"),
-	// 	// lipgloss.WithWhitespaceChars(" "),
-	// 	lipgloss.WithWhitespaceForeground(lipgloss.Color("#1a1a1a")),
-	// )
-	return utils.PlaceOverlay(width, height, styles.ModalStyle.Render(modal), base, true)
+	return utils.RenderWithModal(height, width, base, styles.ModalStyle.Render(modal))
 }

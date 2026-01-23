@@ -14,9 +14,10 @@ type Model struct {
 	itemType     string
 }
 
-func New(id string) Model {
+func New(id string, itemType string) Model {
 	return Model{
 		itemToDelete: id,
+		itemType:     itemType,
 	}
 }
 
