@@ -3,7 +3,6 @@ package confirmation
 import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/styles"
-	debug "clockify-app/internal/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -12,17 +11,16 @@ import (
 type Model struct {
 	cursor       int
 	itemToDelete string
+	itemType     string
 }
 
 func New(id string) Model {
-	debug.Log("Delete Confirmation Modal Created for Item ID: %s", id)
 	return Model{
 		itemToDelete: id,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	debug.Log("Delete Confirmation Modal Initialized")
 	return nil
 }
 
@@ -37,29 +35,27 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			} else {
 				m.cursor = 0
 			}
+
 		case "enter":
 			// Confirm deletion
 			if m.cursor == 0 {
 				// Perform deletion logic here
-				debug.Log("Confirmed deletion of item ID: %s", m.itemToDelete)
 				return m, func() tea.Msg {
 					return messages.ItemDeletedMsg{
 						ID:   m.itemToDelete,
-						Type: "entry", // or "project", etc. depending on context
+						Type: m.itemType,
 					}
 				}
 				// You can add actual deletion logic as needed
 			} else {
 				// Cancel deletion
-				debug.Log("Cancelled deletion of item ID: %s", m.itemToDelete)
 				return m, func() tea.Msg {
 					return messages.ModalClosedMsg{}
 				}
 			}
-			return m, nil
+
 		case "esc", "q":
 			// Cancel deletion
-			debug.Log("Cancelled deletion of item ID: %s", m.itemToDelete)
 			return m, nil
 		}
 	}

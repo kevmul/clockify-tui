@@ -8,7 +8,6 @@ import (
 	"clockify-app/internal/ui/components/confirmation"
 	"clockify-app/internal/ui/components/entryform"
 	"clockify-app/internal/utils"
-	debug "clockify-app/internal/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -46,7 +45,6 @@ func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models
 }
 
 func NewDeleteConfirmation(entryId string) *Model {
-	debug.Log("Delete Confirmation Modal Created for Entry ID: %s", entryId)
 	deleteConfirmation := confirmation.New(entryId)
 	return &Model{
 		modalType:          DeleteConfirmation,

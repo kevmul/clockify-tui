@@ -13,7 +13,8 @@ import (
 // Returns a slice of Project structs or an error
 func (c *Client) GetProjects(workspaceID string) ([]models.Project, error) {
 	// Build the endpoint URL with the workspace ID
-	endpoint := fmt.Sprintf("/workspaces/%s/projects", workspaceID)
+	pageSize := "1000" // Adjust page size as needed
+	endpoint := fmt.Sprintf("/workspaces/%s/projects?page-size=%s", workspaceID, pageSize)
 
 	// Make the GET request
 	body, err := c.Get(endpoint)

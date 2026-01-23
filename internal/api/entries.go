@@ -3,7 +3,6 @@ package api
 import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
-	debug "clockify-app/internal/utils"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -14,9 +13,10 @@ import (
 
 // GetEntries fetches time entries for a user in a workspace from Clockify API
 func (c *Client) GetEntries(workspaceId, userId string) ([]models.Entry, error) {
-	// Implementation to fetch entries from Clockify API
-	endpoint := "/workspaces/%s/user/%s/time-entries"
-	body, err := c.Get(fmt.Sprintf(endpoint, workspaceId, userId))
+
+	pageSize := "30"
+	endpoint := "/workspaces/%s/user/%s/time-entries?page-size=%s"
+	body, err := c.Get(fmt.Sprintf(endpoint, workspaceId, userId, pageSize))
 
 	if err != nil {
 		return nil, err
@@ -49,7 +49,6 @@ func FetchEntries(apiKey, workspaceId, userId string) tea.Cmd {
 // CreateTimeEntry creates a new time entry in Clockify
 // Takes all the necessary parameters and returns an error if creation fails
 func (c *Client) CreateTimeEntry(workspaceID, projectID, description, startTimeStr, endTimeStr string, date time.Time) error {
-	debug.Log("Creating time entry with description:", description)
 	// Parse the time range string (e.g., "9a - 5p") into actual times
 	startTime := parseTime(startTimeStr, date)
 	endTime := parseTime(endTimeStr, date)

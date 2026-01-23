@@ -6,7 +6,6 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/utils"
-	debug "clockify-app/internal/utils"
 	"fmt"
 	"time"
 
@@ -81,7 +80,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 		case "d":
 			// Delete the selected entry
-			debug.Log("Delete key pressed")
 			if len(m.entries) > 0 {
 				selectedEntry := m.entries[m.cursor]
 				// Open the delete confirmation modal (not implemented here)
@@ -109,11 +107,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			items[i] = item{
 				title: description,
 				desc: fmt.Sprintf(
-					"%s  %s - %s (%s)",
+					"%s-%s (%s)",
 
-					entry.TimeInterval.Start.In(time.Local).Format("Jan 02 2006"),
-					entry.TimeInterval.Start.In(time.Local).Format("3:04PM"),
-					entry.TimeInterval.End.In(time.Local).Format("3:04PM"),
+					// entry.TimeInterval.Start.In(time.Local).Format("Mon, Jan 02 2006 3:04PM"),
+					entry.TimeInterval.Start.In(time.Local).Format("Mon, 2006_01_02 03:04PM"),
+					entry.TimeInterval.End.In(time.Local).Format("03:04PM"),
 					projectName,
 				),
 			}
