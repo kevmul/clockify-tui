@@ -128,7 +128,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			c := api.NewClient(m.config.APIKey)
 			err := c.DeleteTimeEntry(m.config.WorkspaceId, msg.ID)
 			debug.Log("Deleted entry ID: %s", msg.ID)
-			debug.Log("Error: %w", err)
+			debug.Log("Error: %v", err)
 			if err != nil {
 				return m, func() tea.Msg {
 					return messages.ErrorMsg{Err: err}
