@@ -32,7 +32,7 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
       - goos: windows
-        formats: zip
+        formats: ["zip"]
 
 checksum:
   name_template: "checksums.txt"
@@ -47,7 +47,7 @@ changelog:
 homebrew_casks:
   - repository:
       owner: kevmul
-      name: clockify-tui-homebrew-tap
+      name: homebrew-tap
     directory: Formula
     homepage: "https://github.com/kevmul/clockify-tui"
     description: "A terminal user interface for Clockify"
@@ -56,7 +56,7 @@ homebrew_casks:
 scoops:
   - repository:
       owner: kevmul
-      name: clockify-tui-scoop-bucket
+      name: scoop-bucket
     homepage: "https://github.com/kevmul/clockify-tui"
     description: "A terminal user interface for Clockify"
     license: "MIT"
