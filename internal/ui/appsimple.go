@@ -76,4 +76,3 @@ func (m SimpleModel) View() string {
 		Align(lipgloss.Center, lipgloss.Center).
 		Render(form)
 }
-
