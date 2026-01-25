@@ -44,7 +44,7 @@ changelog:
       - "^docs:"
       - "^test:"
 
-homebrew_casks:
+brews:
   - repository:
       owner: kevmul
       name: homebrew-tap
