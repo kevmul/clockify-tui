@@ -108,6 +108,24 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			return m, m.updateFocus()
 
+		case "j", "k":
+			if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
+				m.apiKeyInput, cmd = m.apiKeyInput.Update(msg)
+				return m, cmd
+			}
+
+			s := msg.String()
+			if s == "k" {
+				m.currentIndex--
+			} else {
+				m.currentIndex++
+			}
+			if m.currentIndex > saveButton {
+				m.currentIndex = apiKeyInput
+			} else if m.currentIndex < apiKeyInput {
+				m.currentIndex = saveButton
+			}
+
 		case "enter":
 			if !m.showWorkspacesList {
 				switch m.currentIndex {
@@ -144,6 +162,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			m.showWorkspacesList = false
 			m.selectedWorkespaceIndex = 0
+
+			if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
+				// Reset API key input if editing was cancelled
+				m.apiKeyInput.SetValue(m.config.APIKey)
+				m.apiKeyLocked = true
+			}
 
 		default:
 			// Navigate workspace list

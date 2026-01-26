@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 )
 
 // =======================================
@@ -20,7 +21,6 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 	}
 
 	// Render the modal
-	// modalContent := modal.View(width, height)
 	modalContent := modal
 	modalLines := strings.Split(modalContent, "\n")
 
@@ -45,7 +45,7 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 		startCol = 0
 	}
 
-	// Helper to truncate string at visual width (ANSI-aware)
+	// Helper to truncate string at visual width (ANSI-aware and emoji-aware)
 	truncateAt := func(s string, width int) string {
 		if width <= 0 {
 			return ""
@@ -71,13 +71,18 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 				break
 			}
 
+			runeW := runewidth.RuneWidth(r)
+			if currentWidth+runeW > width {
+				break
+			}
+
 			result.WriteRune(r)
-			currentWidth++
+			currentWidth += runeW
 		}
 		return result.String()
 	}
 
-	// Helper to skip first N visual characters (ANSI-aware)
+	// Helper to skip first N visual characters (ANSI-aware and emoji-aware)
 	skipChars := func(s string, n int) string {
 		if n <= 0 {
 			return s
@@ -105,7 +110,8 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 			}
 
 			if !started {
-				skipped++
+				runeW := runewidth.RuneWidth(r)
+				skipped += runeW
 				if skipped > n {
 					started = true
 					result.WriteRune(r)
