@@ -7,6 +7,7 @@ import (
 	"clockify-app/internal/styles"
 	"clockify-app/internal/ui/components/confirmation"
 	"clockify-app/internal/ui/components/entryform"
+	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -26,7 +27,7 @@ type Model struct {
 	deleteConfirmation *confirmation.Model
 	// UI
 	width, height int
-	// help      *help.Model
+	help          *help.Model
 }
 
 func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
@@ -54,11 +55,13 @@ func NewDeleteConfirmation(entryId string) *Model {
 	}
 }
 
-func NewHelp() *Model {
-	// helpModel := help.New()
+func NewHelp(sections ...help.HelpSection) *Model {
+
+	helpModel := help.New(sections...)
+
 	return &Model{
 		modalType: HelpModal,
-		// help:      helpModel,
+		help:      &helpModel,
 	}
 }
 
@@ -69,7 +72,7 @@ func (m Model) Init() tea.Cmd {
 	case DeleteConfirmation:
 		return m.deleteConfirmation.Init()
 	case HelpModal:
-		// return m.help.Init()
+		return m.help.Init()
 	}
 	return nil
 }
@@ -96,7 +99,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case DeleteConfirmation:
 		*m.deleteConfirmation, cmd = m.deleteConfirmation.Update(msg)
 	case HelpModal:
-		// *m.help, cmd = m.help.Update(msg)
+		*m.help, cmd = m.help.Update(msg)
 	}
 
 	return m, cmd
@@ -109,7 +112,7 @@ func (m Model) View() string {
 	case DeleteConfirmation:
 		return m.deleteConfirmation.View()
 	case HelpModal:
-		// return ui.ModalStyle.Render(m.help.View())
+		return m.help.View()
 	}
 	return "MODAL"
 }

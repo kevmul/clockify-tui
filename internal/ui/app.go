@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/term"
 
+	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/ui/components/modal"
 	"clockify-app/internal/ui/views/entries"
 	"clockify-app/internal/ui/views/settings"
@@ -122,7 +123,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			case "?":
 				m.showModal = true
-				m.modal = modal.NewHelp()
+				if m.currentView == EntriesView {
+					m.modal = modal.NewHelp(
+						help.GenerateSection("Entries Keys", help.Entry),
+						help.GenerateSection("Global Keys", help.Global),
+					)
+					return m, nil
+				}
+				if m.currentView == SettingsView {
+					m.modal = modal.NewHelp(
+						help.GenerateSection("Settings Keys", help.Settings),
+						help.GenerateSection("Global Keys", help.Global),
+					)
+					return m, nil
+				}
+				m.modal = modal.NewHelp(
+					help.GenerateSection("Global Keys", help.Global),
+				)
 				return m, nil
 			}
 		}
