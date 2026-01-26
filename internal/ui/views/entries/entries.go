@@ -102,8 +102,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			// Get the project name or a default
 			projectName := "No Project"
 			project, _ := utils.FindProjectById(m.projects, entry.ProjectID)
-			if project.ID != "" {
+			if project.ID != "" && project.ClientName != "" {
 				projectName = fmt.Sprintf("%s - %s", project.Name, project.ClientName)
+			}
+			if project.ID != "" {
+				projectName = fmt.Sprintf("%s", project.Name)
 			}
 			items[i] = item{
 				title: description,

@@ -87,106 +87,106 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	// case tea.KeyMsg:
-	// 	switch msg.String() {
-	// 	case "ctrl+c":
-	// 		return m, tea.Quit
-	//
-	// 	case "tab", "shift+tab", "up", "down":
-	// 		m.saved = false
-	// 		m.err = nil
-	//
-	// 		s := msg.String()
-	// 		if s == "up" || s == "shift+tab" {
-	// 			m.currentIndex--
-	// 		} else {
-	// 			m.currentIndex++
-	// 		}
-	//
-	// 		if m.currentIndex > saveButton {
-	// 			m.currentIndex = apiKeyInput
-	// 		} else if m.currentIndex < apiKeyInput {
-	// 			m.currentIndex = saveButton
-	// 		}
-	//
-	// 		return m, m.updateFocus()
-	//
-	// 	case "j", "k":
-	// 		if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
-	// 			m.apiKeyInput, cmd = m.apiKeyInput.Update(msg)
-	// 			return m, cmd
-	// 		}
-	//
-	// 		s := msg.String()
-	// 		if s == "k" {
-	// 			m.currentIndex--
-	// 		} else {
-	// 			m.currentIndex++
-	// 		}
-	// 		if m.currentIndex > saveButton {
-	// 			m.currentIndex = apiKeyInput
-	// 		} else if m.currentIndex < apiKeyInput {
-	// 			m.currentIndex = saveButton
-	// 		}
-	//
-	// 	case "enter":
-	// 		if !m.showWorkspacesList {
-	// 			switch m.currentIndex {
-	// 			case apiKeyInput:
-	// 				// Toggle API key input lock
-	// 				if m.apiKeyLocked {
-	// 					m.apiKeyLocked = false
-	// 					m.saved = false
-	// 				} else if m.apiKeyInput.Value() != "" {
-	// 					m.apiKeyLocked = true
-	// 				}
-	//
-	// 			case workspaceInput:
-	// 				// Show workspace list if we have an API key
-	// 				if m.apiKeyInput.Value() != "" {
-	// 					m.showWorkspacesList = true
-	// 					return m, m.fetchWorkspaces()
-	// 				}
-	//
-	// 			case saveButton:
-	// 				return m, m.getUserInfo()
-	// 			}
-	// 		} else if m.showWorkspacesList {
-	// 			if len(m.workspaces) > 0 {
-	// 				m.selectedWorkspace = m.workspaces[m.selectedWorkespaceIndex]
-	// 				m.workspaceInput.SetValue(m.selectedWorkspace.Name)
-	// 				m.showWorkspacesList = false
-	// 				m.selectedWorkespaceIndex = 0
-	// 			}
-	// 			return m, nil
-	// 		}
-	//
-	// 	case "esc":
-	//
-	// 		m.showWorkspacesList = false
-	// 		m.selectedWorkespaceIndex = 0
-	//
-	// 		if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
-	// 			// Reset API key input if editing was cancelled
-	// 			m.apiKeyInput.SetValue(m.config.APIKey)
-	// 			m.apiKeyLocked = true
-	// 		}
-	//
-	// 	default:
-	// 		// Navigate workspace list
-	// 		if m.showWorkspacesList {
-	// 			switch msg.String() {
-	// 			case "j", "down":
-	// 				if m.selectedWorkespaceIndex < len(m.workspaces)-1 {
-	// 					m.selectedWorkespaceIndex++
-	// 				}
-	// 			case "k", "up":
-	// 				if m.selectedWorkespaceIndex > 0 {
-	// 					m.selectedWorkespaceIndex--
-	// 				}
-	// 			}
-	// 		}
-	// 	}
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c":
+			return m, tea.Quit
+
+		case "tab", "shift+tab", "up", "down":
+			m.saved = false
+			m.err = nil
+
+			s := msg.String()
+			if s == "up" || s == "shift+tab" {
+				m.currentIndex--
+			} else {
+				m.currentIndex++
+			}
+
+			if m.currentIndex > saveButton {
+				m.currentIndex = apiKeyInput
+			} else if m.currentIndex < apiKeyInput {
+				m.currentIndex = saveButton
+			}
+
+			return m, m.updateFocus()
+
+		// case "j", "k":
+		// 	if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
+		// 		m.apiKeyInput, cmd = m.apiKeyInput.Update(msg)
+		// 		return m, cmd
+		// 	}
+		//
+		// 	s := msg.String()
+		// 	if s == "k" {
+		// 		m.currentIndex--
+		// 	} else {
+		// 		m.currentIndex++
+		// 	}
+		// 	if m.currentIndex > saveButton {
+		// 		m.currentIndex = apiKeyInput
+		// 	} else if m.currentIndex < apiKeyInput {
+		// 		m.currentIndex = saveButton
+		// 	}
+
+		case "enter":
+			if !m.showWorkspacesList {
+				switch m.currentIndex {
+				case apiKeyInput:
+					// Toggle API key input lock
+					if m.apiKeyLocked {
+						m.apiKeyLocked = false
+						m.saved = false
+					} else if m.apiKeyInput.Value() != "" {
+						m.apiKeyLocked = true
+					}
+
+				case workspaceInput:
+					// Show workspace list if we have an API key
+					if m.apiKeyInput.Value() != "" {
+						m.showWorkspacesList = true
+						return m, m.fetchWorkspaces()
+					}
+
+				case saveButton:
+					return m, m.getUserInfo()
+				}
+			} else if m.showWorkspacesList {
+				if len(m.workspaces) > 0 {
+					m.selectedWorkspace = m.workspaces[m.selectedWorkespaceIndex]
+					m.workspaceInput.SetValue(m.selectedWorkspace.Name)
+					m.showWorkspacesList = false
+					m.selectedWorkespaceIndex = 0
+				}
+				return m, nil
+			}
+
+		case "esc":
+
+			m.showWorkspacesList = false
+			m.selectedWorkespaceIndex = 0
+
+			if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
+				// Reset API key input if editing was cancelled
+				m.apiKeyInput.SetValue(m.config.APIKey)
+				m.apiKeyLocked = true
+			}
+
+		default:
+			// Navigate workspace list
+			if m.showWorkspacesList {
+				switch msg.String() {
+				case "j", "down":
+					if m.selectedWorkespaceIndex < len(m.workspaces)-1 {
+						m.selectedWorkespaceIndex++
+					}
+				case "k", "up":
+					if m.selectedWorkespaceIndex > 0 {
+						m.selectedWorkespaceIndex--
+					}
+				}
+			}
+		}
 
 	case messages.UserLoadedMsg:
 		m.userId = msg.UserId

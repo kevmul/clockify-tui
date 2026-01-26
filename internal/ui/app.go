@@ -6,6 +6,7 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
+	// debug "clockify-app/internal/utils"
 	"os"
 
 	"golang.org/x/term"
@@ -61,7 +62,7 @@ func NewModel() Model {
 	currentView := SettingsView
 
 	if cfg.APIKey != "" && cfg.WorkspaceId != "" {
-		// currentView = EntriesView
+		currentView = EntriesView
 	}
 
 	return Model{
@@ -112,6 +113,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.height = msg.Height
 			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.viewport.YPosition = headerHeight
+			m.viewport.SetContent(m.renderContent())
 			m.ready = true
 		} else {
 			m.width = msg.Width
@@ -119,6 +121,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.Width = msg.Width
 			m.viewport.Height = msg.Height - verticalMarginHeight
 		}
+
+		if m.showModal && m.modal != nil {
+			m.modal.SetHeight(max(5, m.height-15))
+		}
+		return m, nil
 
 	case tea.KeyMsg:
 		// Global keybindings
@@ -128,13 +135,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case "1":
 				m.currentView = EntriesView
+				m.viewport.SetContent(m.renderContent())
 				return m, m.entries.Init()
 			case "2":
 				m.currentView = SettingsView
+				m.viewport.SetContent(m.renderContent())
 				return m, nil
 			case "n":
 				m.showModal = true
 				m.modal = modal.NewEntryForm(m.config, m.projects)
+				m.modal.SetHeight(max(5, m.height-15))
 				return m, nil
 			case "?":
 				m.showModal = true
@@ -143,6 +153,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						help.GenerateSection("Entries Keys", help.Entry),
 						help.GenerateSection("Global Keys", help.Global),
 					)
+					m.modal.SetHeight(max(5, m.height-15))
 					return m, nil
 				}
 				if m.currentView == SettingsView {
@@ -150,11 +161,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						help.GenerateSection("Settings Keys", help.Settings),
 						help.GenerateSection("Global Keys", help.Global),
 					)
+					m.modal.SetHeight(max(5, m.height-15))
 					return m, nil
 				}
+				// Default help
 				m.modal = modal.NewHelp(
 					help.GenerateSection("Global Keys", help.Global),
 				)
+				m.modal.SetHeight(max(5, m.height-15))
 				return m, nil
 			}
 		}
@@ -162,18 +176,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.UserLoadedMsg:
 		m.userId = msg.UserId
 		m.settings, cmd = m.settings.Update(msg)
+		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
 	case messages.ConfigSavedMsg:
 		m.config = msg.Config
 		m.userId = msg.UserId
 		m.workspaceId = msg.WorkspaceId
+		m.viewport.SetContent(m.renderContent())
 		_ = m.config.Save()
 		return m, nil
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
 		m.entries, cmd = m.entries.Update(msg)
+		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
 	case messages.EntrySavedMsg:
@@ -187,20 +204,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.EntriesLoadedMsg:
 		m.entries, cmd = m.entries.Update(msg)
+		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
 	case messages.EntryUpdateStartedMsg:
 		m.showModal = true
 		m.modal = modal.UpdateEntryForm(m.config, m.projects, msg.Entry)
+		m.viewport.SetContent(m.renderContent())
 		return m, nil
 
 	case messages.EntryDeleteStartedMsg:
 		m.showModal = true
 		m.modal = modal.NewDeleteConfirmation(msg.EntryId)
+		m.viewport.SetContent(m.renderContent())
 		return m, nil
 
 	case messages.ModalClosedMsg:
 		m.showModal = false
+		m.viewport.SetContent(m.renderContent())
 		return m, nil
 
 	case messages.ItemDeletedMsg:
@@ -230,10 +251,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
+	if _, ok := msg.(tea.KeyMsg); ok {
+		// Update viewport content on key events
+		m.viewport.SetContent(m.renderContent())
+	}
+
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
+
 	if !m.ready {
 		return "Loading..."
 	}
@@ -244,35 +271,18 @@ func (m Model) View() string {
 	// Tabs
 	navBar := m.RenderNavBar("entries", physicalWidth)
 
-	// The actual View
-	var view string
-
-	// Render active view
-	switch m.currentView {
-	case SettingsView:
-		view = m.settings.View()
-	case EntriesView:
-		view = m.entries.View()
-	}
+	// The viewport already contains the view content in Update
+	viewportView := m.viewport.View()
 
 	// Overlay modal if showing
 	if m.showModal && m.modal != nil {
-		view = modal.Overlay(view, m.modal.View(), m.width, m.height-8)
+		viewportView = modal.Overlay(viewportView, m.modal.View(), m.width, max(5, m.height-8))
 	}
-
-	m.viewport.SetContent(view)
-
-	contentHeight := m.height - 1
 
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		lipgloss.NewStyle().Height(contentHeight).Width(m.width).Render(
-			lipgloss.JoinVertical(
-				lipgloss.Top,
-				navBar,
-				// view,
-				m.viewport.View(),
-			)),
+		navBar,
+		viewportView,
 		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][cntrl+c]: quit"),
 	)
 }
@@ -314,4 +324,16 @@ func (m Model) RenderNavBar(activeTab string, docWidth int) string {
 	)
 
 	return styles.NavContainerStyle.Render(fullNav)
+}
+
+func (m Model) renderContent() string {
+	// Render active view
+	switch m.currentView {
+	case SettingsView:
+		return m.settings.View()
+	case EntriesView:
+		return m.entries.View()
+	}
+
+	return ""
 }
