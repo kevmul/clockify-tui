@@ -15,6 +15,7 @@ import (
 	"clockify-app/internal/ui/views/entries"
 	"clockify-app/internal/ui/views/settings"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -49,7 +50,8 @@ type Model struct {
 	height int
 
 	// Loading state
-	ready bool
+	ready    bool
+	viewport viewport.Model
 }
 
 func NewModel() Model {
@@ -59,7 +61,7 @@ func NewModel() Model {
 	currentView := SettingsView
 
 	if cfg.APIKey != "" && cfg.WorkspaceId != "" {
-		currentView = EntriesView
+		// currentView = EntriesView
 	}
 
 	return Model{
@@ -74,7 +76,6 @@ func NewModel() Model {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		m.initializeFirstViewCmd(),
-		// settings.Init(),
 		tea.EnterAltScreen,
 	)
 }
@@ -101,9 +102,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.ready = true
+		headerHeight := 4
+		footerHeight := 1
+		verticalMarginHeight := headerHeight + footerHeight
+
+		// Update viewport size
+		if !m.ready {
+			m.width = msg.Width
+			m.height = msg.Height
+			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
+			m.viewport.YPosition = headerHeight
+			m.ready = true
+		} else {
+			m.width = msg.Width
+			m.height = msg.Height
+			m.viewport.Width = msg.Width
+			m.viewport.Height = msg.Height - verticalMarginHeight
+		}
 
 	case tea.KeyMsg:
 		// Global keybindings
@@ -210,8 +225,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case EntriesView:
 		m.entries, cmd = m.entries.Update(msg)
 	}
-
 	cmds = append(cmds, cmd)
+
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -242,6 +260,8 @@ func (m Model) View() string {
 		view = modal.Overlay(view, m.modal.View(), m.width, m.height-8)
 	}
 
+	m.viewport.SetContent(view)
+
 	contentHeight := m.height - 1
 
 	return lipgloss.JoinVertical(
@@ -250,7 +270,8 @@ func (m Model) View() string {
 			lipgloss.JoinVertical(
 				lipgloss.Top,
 				navBar,
-				view,
+				// view,
+				m.viewport.View(),
 			)),
 		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][cntrl+c]: quit"),
 	)
