@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -37,6 +38,8 @@ type Model struct {
 	selectedWorkespaceIndex int
 	showWorkspacesList      bool
 	apiKeyLocked            bool
+
+	viewport viewport.Model
 }
 
 func New(cfg *config.Config) Model {

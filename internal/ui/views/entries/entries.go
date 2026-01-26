@@ -56,7 +56,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	// Set the list size when the window size changes
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v-4)
+		m.list.SetSize(msg.Width-h, msg.Height-v-5)
 
 	case tea.KeyMsg:
 		switch msg.String() {
