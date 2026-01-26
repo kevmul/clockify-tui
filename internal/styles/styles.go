@@ -107,4 +107,10 @@ var (
 	// Tab separator style
 	SeparatorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#333333"))
+
+	// Information Bar
+	InfoBarStyle = lipgloss.NewStyle().
+			Background(Primary).
+			Foreground(lipgloss.Color("#FFFFFF")).
+			Padding(0, 2)
 )

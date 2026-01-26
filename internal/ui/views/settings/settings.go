@@ -289,7 +289,6 @@ func (m Model) View() string {
 
 	// Help
 	b.WriteString("\n")
-	b.WriteString(styles.HelpStyle.Render("Tab/Shift+Tab: Navigate • Enter: Select/Save • Esc: Close List • Ctrl+C: Quit"))
 
 	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
 }

@@ -242,10 +242,17 @@ func (m Model) View() string {
 		view = modal.Overlay(view, m.modal.View(), m.width, m.height-8)
 	}
 
+	contentHeight := m.height - 1
+
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		navBar,
-		view,
+		lipgloss.NewStyle().Height(contentHeight).Width(m.width).Render(
+			lipgloss.JoinVertical(
+				lipgloss.Top,
+				navBar,
+				view,
+			)),
+		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][cntrl+c]: quit"),
 	)
 }
 
