@@ -3,9 +3,27 @@ package utils
 import (
 	"strings"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
 )
+
+// =======================================
+// Get the width of the modal
+// based on line width
+// =======================================
+
+func WidthOfModal(width int, modal string) int {
+	modalLines := strings.Split(modal, "\n")
+	modalWidth := 0
+	for _, line := range modalLines {
+		lineLen := lipgloss.Width(line)
+		if lineLen > modalWidth {
+			modalWidth = lineLen
+		}
+	}
+	return modalWidth
+}
 
 // =======================================
 // Custom overlay function
@@ -32,14 +50,7 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 	}
 
 	// Find the actual width of the modal
-	modalWidth := 0
-	for _, line := range modalLines {
-		lineLen := lipgloss.Width(line)
-		if lineLen > modalWidth {
-			modalWidth = lineLen
-		}
-	}
-
+	modalWidth := WidthOfModal(width, modal)
 	startCol := (width - modalWidth) / 2
 	if startCol < 0 {
 		startCol = 0
@@ -149,4 +160,35 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 	}
 
 	return strings.Join(baseLines, "\n")
+}
+
+func RenderScrollbar(viewport viewport.Model) string {
+	if viewport.TotalLineCount() <= viewport.Height {
+		// No scrollbar needed
+		return ""
+	}
+
+	// Calculate the scrollbar properties
+	totalLines := viewport.TotalLineCount()
+	viewportHeight := viewport.Height
+	scrollPercent := float64(viewport.YOffset) / float64(totalLines-viewportHeight)
+
+	// Caluclate thumb position
+	thumbHeight := max(1, (viewportHeight*viewportHeight)/totalLines)
+	thumbPosition := int(float64(viewportHeight-thumbHeight) * scrollPercent)
+
+	// Build scrollbar
+	var scrollbar strings.Builder
+	for i := range viewportHeight {
+		if i >= thumbPosition && i < thumbPosition+thumbHeight {
+			scrollbar.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("62")).Render("█"))
+		} else {
+			scrollbar.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("│"))
+		}
+		if i < viewportHeight-1 {
+			scrollbar.WriteString("\n")
+		}
+	}
+
+	return scrollbar.String()
 }

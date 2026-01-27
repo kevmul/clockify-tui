@@ -6,10 +6,9 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
-	// debug "clockify-app/internal/utils"
-	"os"
+	"clockify-app/internal/utils"
 
-	"golang.org/x/term"
+	// debug "clockify-app/internal/utils"
 
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/ui/components/modal"
@@ -109,22 +108,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Update viewport size
 		if !m.ready {
+			m.viewport = viewport.New(msg.Width-1, msg.Height-verticalMarginHeight)
+			// m.viewport.YPosition = headerHeight
+			m.viewport.SetContent(m.renderContent())
 			m.width = msg.Width
 			m.height = msg.Height
-			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.viewport.YPosition = headerHeight
-			m.viewport.SetContent(m.renderContent())
 			m.ready = true
 		} else {
+			m.viewport.Width = msg.Width - 1
+			m.viewport.Height = msg.Height - verticalMarginHeight
 			m.width = msg.Width
 			m.height = msg.Height
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - verticalMarginHeight
 		}
 
-		if m.showModal && m.modal != nil {
-			m.modal.SetHeight(max(5, m.height-15))
+		if m.currentView == EntriesView {
+			// Let entries view handle resizing if needed
+			m.entries, cmd = m.entries.Update(msg)
+			cmds = append(cmds, cmd)
 		}
+
 		return m, nil
 
 	case tea.KeyMsg:
@@ -144,7 +146,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "n":
 				m.showModal = true
 				m.modal = modal.NewEntryForm(m.config, m.projects)
-				m.modal.SetHeight(max(5, m.height-15))
 				return m, nil
 			case "?":
 				m.showModal = true
@@ -153,7 +154,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						help.GenerateSection("Entries Keys", help.Entry),
 						help.GenerateSection("Global Keys", help.Global),
 					)
-					m.modal.SetHeight(max(5, m.height-15))
 					return m, nil
 				}
 				if m.currentView == SettingsView {
@@ -161,14 +161,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						help.GenerateSection("Settings Keys", help.Settings),
 						help.GenerateSection("Global Keys", help.Global),
 					)
-					m.modal.SetHeight(max(5, m.height-15))
 					return m, nil
 				}
 				// Default help
 				m.modal = modal.NewHelp(
 					help.GenerateSection("Global Keys", help.Global),
 				)
-				m.modal.SetHeight(max(5, m.height-15))
 				return m, nil
 			}
 		}
@@ -266,23 +264,31 @@ func (m Model) View() string {
 	}
 
 	// Create a top navigation bar
-	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
 
 	// Tabs
-	navBar := m.RenderNavBar("entries", physicalWidth)
+	navBar := m.RenderNavBar("entries", m.width)
+
+	// Add scrollbar
+	scrollbar := utils.RenderScrollbar(m.viewport)
 
 	// The viewport already contains the view content in Update
 	viewportView := m.viewport.View()
 
+	content := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		viewportView,
+		scrollbar,
+	)
+
 	// Overlay modal if showing
 	if m.showModal && m.modal != nil {
-		viewportView = modal.Overlay(viewportView, m.modal.View(), m.width, max(5, m.height-8))
+		content = modal.Overlay(content, m.modal.View(), m.width, max(5, m.height-8))
 	}
 
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
 		navBar,
-		viewportView,
+		content,
 		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][cntrl+c]: quit"),
 	)
 }
@@ -311,16 +317,11 @@ func (m Model) RenderNavBar(activeTab string, docWidth int) string {
 
 	sep := styles.SeparatorStyle.Render("|")
 
-	leftSide := lipgloss.JoinHorizontal(
+	fullNav := lipgloss.JoinHorizontal(
 		lipgloss.Center,
 		entries,
 		sep,
 		settings,
-	)
-
-	fullNav := lipgloss.JoinHorizontal(
-		lipgloss.Center,
-		leftSide,
 	)
 
 	return styles.NavContainerStyle.Render(fullNav)

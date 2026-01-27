@@ -264,16 +264,6 @@ func (m Model) View() string {
 		b.WriteString("\n\n")
 	}
 
-	// Current config info
-	if m.config.UserId != "" {
-		b.WriteString(styles.SuccessStyle.Render(fmt.Sprintf("✓ Current User ID: %s", m.config.UserId)))
-		b.WriteString("\n")
-	}
-	if m.config.WorkspaceId != "" {
-		b.WriteString(styles.SuccessStyle.Render(fmt.Sprintf("✓ Current Workspace ID: %s", m.config.WorkspaceId)))
-		b.WriteString("\n\n")
-	}
-
 	// Save Button
 	b.WriteString(m.renderSaveButton())
 	b.WriteString("\n\n")

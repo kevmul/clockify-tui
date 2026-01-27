@@ -18,9 +18,8 @@ import (
 type Model struct {
 	config   *config.Config
 	projects []models.Project
-	// tasks    []models.Task
-	entries []models.Entry
-	cursor  int
+	entries  []models.Entry
+	cursor   int
 
 	list list.Model
 }
@@ -28,6 +27,7 @@ type Model struct {
 func New(cfg *config.Config) Model {
 	list := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	list.Title = "Clockify Entries"
+	list.SetShowTitle(false)
 	list.SetShowStatusBar(true)
 	list.SetFilteringEnabled(true)
 	list.SetShowHelp(false)

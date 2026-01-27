@@ -9,10 +9,12 @@ import (
 	"clockify-app/internal/ui/components/entryform"
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/utils"
+
 	// debug "clockify-app/internal/utils"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type ModalType int
@@ -29,8 +31,6 @@ type Model struct {
 	help               *help.Model
 	deleteConfirmation *confirmation.Model
 	// UI
-	// width    int
-	// height   int
 	viewport viewport.Model
 }
 
@@ -93,10 +93,6 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	// case tea.WindowSizeMsg:
-	// 		m.width = msg.Width
-	// 		m.height = msg.Height
-	// 		m.viewport.Width = msg.Width
 	case tea.KeyMsg:
 		// We might move this to the modal themselves later...
 		if msg.String() == "esc" || msg.String() == "q" || msg.String() == "ctrl+c" {
@@ -130,7 +126,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return m.viewport.View()
+
+	viewport := m.viewport.View()
+
+	scrollbar := utils.RenderScrollbar(m.viewport)
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		lipgloss.NewStyle().Width(styles.ModalWidth-5).Render(viewport),
+		scrollbar,
+	)
 }
 
 func (m Model) RenderContent() string {
@@ -143,10 +148,6 @@ func (m Model) RenderContent() string {
 		return m.help.View()
 	}
 	return "MODAL"
-}
-
-func (m *Model) SetHeight(height int) {
-	m.viewport.Height = height
 }
 
 // Overlay renders a modal on top of existing content
