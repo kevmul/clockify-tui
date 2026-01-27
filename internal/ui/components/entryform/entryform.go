@@ -42,7 +42,7 @@ type Model struct {
 	timeStart      textinput.Model // Text input for start time (e.g., "9:00 AM")
 	timeEnd        textinput.Model // Text input for end time (e.g., "5:00 PM")
 	description    textinput.Model // Text input for task description
-	taskName       textinput.Model // Text input for task description
+	task           textinput.Model // Text input for task description
 	projectSearch  textinput.Model // Text input for project search
 	selectedProj   models.Project  // The project user selected
 	selectedProjID int             // ID of the selected project
@@ -76,10 +76,10 @@ func New(cfg *config.Config, projects []models.Project) Model {
 	descriptionInput.Width = 50
 
 	// Create and configure the task name input
-	taskNameInput := textinput.New()
-	taskNameInput.Placeholder = "Enter task description"
-	taskNameInput.CharLimit = 100
-	taskNameInput.Width = 50
+	taskInput := textinput.New()
+	taskInput.Placeholder = "Enter task description"
+	taskInput.CharLimit = 100
+	taskInput.Width = 50
 
 	// Create and configure the project search input
 	searchInput := textinput.New()
@@ -94,7 +94,7 @@ func New(cfg *config.Config, projects []models.Project) Model {
 		timeStart:     timeStartInput,
 		timeEnd:       timeEndInput,
 		description:   descriptionInput,
-		taskName:      taskNameInput,
+		task:          taskInput,
 		projectSearch: searchInput,
 		projects:      projects,
 		cursor:        0, // Start at first item in lists
@@ -109,7 +109,7 @@ func (m Model) UpdateEntry(entry models.Entry) Model {
 	m.selectedEntry = entry
 	m.date = entry.TimeInterval.Start.In(time.Local)
 
-	m.taskName.SetValue(entry.Description)
+	m.description.SetValue(entry.Description)
 
 	// Pre-fill time inputs
 	startStr := entry.TimeInterval.Start.In(time.Local).Format("3:04 PM")
@@ -182,7 +182,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.step > stepDateSelect {
 				m.step--
 			}
-
 		}
 
 	case messages.TasksLoadedMsg:

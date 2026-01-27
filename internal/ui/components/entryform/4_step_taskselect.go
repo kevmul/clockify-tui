@@ -101,12 +101,12 @@ func (m Model) updateTaskInput(msg tea.Msg) (Model, tea.Cmd) {
 			if len(m.tasks) > 0 {
 				m.selectedTask = m.tasks[m.cursor]
 			}
-			m.taskName.Blur()
+			m.task.Blur()
 			m.timeStart.Focus()
 			m.step = stepTimeInput
 		}
 	}
-	m.taskName, cmd = m.taskName.Update(msg)
+	m.task, cmd = m.task.Update(msg)
 
 	return m, cmd
 }

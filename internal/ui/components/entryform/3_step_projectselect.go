@@ -130,17 +130,11 @@ func (m Model) updateProjectSelect(msg tea.Msg) (Model, tea.Cmd) {
 			filtered := m.filterProjects()
 			if len(filtered) > 0 && m.cursor < len(filtered) {
 				m.selectedProj = filtered[m.cursor]
-				m.taskName.Focus()
+				m.task.Focus()
 				m.cursor = 0
+				m.tasks = nil
+				m.tasksReady = false
 				m.step = stepTaskInput
-				// if len(m.tasks[m.selectedProj.ID]) > 0 {
-				// 	m.taskName.Focus()
-				// 	m.step = stepTaskInput
-				// } else {
-				// 	m.timeStart.Focus()
-				// 	m.step = stepTimeInput
-				// }
-				// Reset cursor for next step
 				m.cursor = 0
 			}
 			return m, api.FetchTasks(m.apiKey, m.workspaceID, m.selectedProj.ID)

@@ -27,7 +27,7 @@ func (m Model) updateDescriptionInput(msg tea.Msg) (Model, tea.Cmd) {
 		case "enter":
 			// Move to next step or finish
 			m.description.Blur()
-			m.step++
+			m.step = stepProjectSelect
 		}
 	}
 	m.description, cmd = m.description.Update(msg)

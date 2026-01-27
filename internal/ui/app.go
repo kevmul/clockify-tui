@@ -289,7 +289,7 @@ func (m Model) View() string {
 		lipgloss.Top,
 		navBar,
 		content,
-		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][cntrl+c]: quit"),
+		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][ctrl+c]: quit"),
 	)
 }
 

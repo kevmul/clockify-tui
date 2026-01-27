@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	debug "clockify-app/internal/utils"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -38,6 +40,8 @@ func FetchTasks(apiKey, workspaceId, projectId string) tea.Cmd {
 		if err != nil {
 			return messages.ErrorMsg{Err: err}
 		}
+
+		debug.Log("Fetched tasks: %v", tasks)
 
 		return messages.TasksLoadedMsg{
 			Tasks: tasks,
