@@ -32,7 +32,7 @@ func (m Model) viewProjectSelect() string {
 	}
 
 	// Calculate visible range for scrolling
-	const visibleItems = 10 // Show 10 items at a time
+	const visibleItems = 5 // Show 10 items at a time
 	start := 0
 	end := len(filteredProjects)
 
@@ -43,15 +43,15 @@ func (m Model) viewProjectSelect() string {
 		end = start + visibleItems
 
 		// Adjust if we're near the beginning
-		if start < 0 {
+		if start <= 0 {
 			start = 0
-			end = visibleItems
+			end = visibleItems + 1
 		}
 
 		// Adjust if we're near the end
 		if end > len(filteredProjects) {
 			end = len(filteredProjects)
-			start = end - visibleItems
+			start = end - visibleItems + 1
 			if start < 0 {
 				start = 0
 			}
@@ -84,7 +84,7 @@ func (m Model) viewProjectSelect() string {
 
 	// Show indicator if there are items below
 	if len(filteredProjects) > visibleItems && end < len(filteredProjects) {
-		sb.WriteString(fmt.Sprintf("  ↓ %d more below...\n", len(filteredProjects)-end))
+		sb.WriteString(fmt.Sprintf("  ↓ %d more below...", len(filteredProjects)-end))
 	}
 
 	return sb.String()

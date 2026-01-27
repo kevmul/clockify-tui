@@ -21,8 +21,8 @@ var (
 	MarginMedium = 2
 	MarginLarge  = 3
 
-	ModalWidth  = 60
-	ModalHeight = 20
+	ModalWidth  = 64
+	ModalHeight = 12
 
 	// Text styles
 	TitleStyle = lipgloss.NewStyle().
@@ -56,7 +56,7 @@ var (
 	ModalStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(Primary).
-			Padding(1, 2).
+			Padding(0, 1).
 			Width(ModalWidth)
 
 	// Input styles

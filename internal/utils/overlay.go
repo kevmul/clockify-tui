@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"clockify-app/internal/styles"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -181,9 +182,9 @@ func RenderScrollbar(viewport viewport.Model) string {
 	var scrollbar strings.Builder
 	for i := range viewportHeight {
 		if i >= thumbPosition && i < thumbPosition+thumbHeight {
-			scrollbar.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("62")).Render("█"))
+			scrollbar.WriteString(lipgloss.NewStyle().Foreground(styles.Secondary).Render("█"))
 		} else {
-			scrollbar.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("│"))
+			scrollbar.WriteString(lipgloss.NewStyle().Foreground(styles.Muted).Render("│"))
 		}
 		if i < viewportHeight-1 {
 			scrollbar.WriteString("\n")

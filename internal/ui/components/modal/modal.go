@@ -36,7 +36,7 @@ type Model struct {
 
 func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 	form := entryform.New(cfg, projects)
-	viewport := viewport.New(0, 10)
+	viewport := viewport.New(0, styles.ModalHeight)
 	viewport.SetContent(form.View())
 	return &Model{
 		modalType: EntryModal,
@@ -48,7 +48,7 @@ func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
 	form := entryform.New(cfg, projects)
 	form = form.UpdateEntry(entry)
-	viewport := viewport.New(0, 10)
+	viewport := viewport.New(0, styles.ModalHeight)
 	viewport.SetContent(form.View())
 	return &Model{
 		modalType: EntryModal,
@@ -59,7 +59,7 @@ func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models
 
 func NewDeleteConfirmation(entryId string) *Model {
 	deleteConfirmation := confirmation.New(entryId, "entry")
-	viewport := viewport.New(0, 10)
+	viewport := viewport.New(0, 4)
 	viewport.SetContent(deleteConfirmation.View())
 	return &Model{
 		modalType:          DeleteConfirmation,
@@ -133,7 +133,7 @@ func (m Model) View() string {
 
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		lipgloss.NewStyle().Width(styles.ModalWidth-5).Render(viewport),
+		lipgloss.NewStyle().Width(styles.ModalWidth-3).Render(viewport),
 		scrollbar,
 	)
 }
