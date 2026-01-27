@@ -3,10 +3,14 @@
 echo "Running Clockify App Tests..."
 echo "=============================="
 
-# Run tests with coverage
-go test -v -cover ./internal/api ./internal/utils ./internal/config ./internal/models
+# Run all tests with coverage
+echo "Running tests with coverage..."
+go test ./... -v -cover
 
-echo ""
-echo "Test Summary:"
-echo "============="
-go test ./internal/api ./internal/utils ./internal/config ./internal/models | grep -E "(PASS|FAIL)"
+# Generate coverage report
+echo -e "\nGenerating coverage report..."
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out -o coverage.html
+
+echo -e "\nTest coverage report generated: coverage.html"
+echo "Open coverage.html in your browser to view detailed coverage"
