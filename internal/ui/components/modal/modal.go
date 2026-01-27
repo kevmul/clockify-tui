@@ -10,7 +10,11 @@ import (
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/utils"
 
+	// debug "clockify-app/internal/utils"
+
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type ModalType int
@@ -24,44 +28,54 @@ const (
 type Model struct {
 	modalType          ModalType
 	entryForm          *entryform.Model
+	help               *help.Model
 	deleteConfirmation *confirmation.Model
 	// UI
-	width, height int
-	help          *help.Model
+	viewport viewport.Model
 }
 
 func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 	form := entryform.New(cfg, projects)
+	viewport := viewport.New(0, 10)
+	viewport.SetContent(form.View())
 	return &Model{
 		modalType: EntryModal,
 		entryForm: &form,
+		viewport:  viewport,
 	}
 }
 
 func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
 	form := entryform.New(cfg, projects)
 	form = form.UpdateEntry(entry)
+	viewport := viewport.New(0, 10)
+	viewport.SetContent(form.View())
 	return &Model{
 		modalType: EntryModal,
 		entryForm: &form,
+		viewport:  viewport,
 	}
 }
 
 func NewDeleteConfirmation(entryId string) *Model {
 	deleteConfirmation := confirmation.New(entryId, "entry")
+	viewport := viewport.New(0, 10)
+	viewport.SetContent(deleteConfirmation.View())
 	return &Model{
 		modalType:          DeleteConfirmation,
 		deleteConfirmation: &deleteConfirmation,
+		viewport:           viewport,
 	}
 }
 
 func NewHelp(sections ...help.HelpSection) *Model {
-
 	helpModel := help.New(sections...)
-
+	viewport := viewport.New(0, 10)
+	viewport.SetContent(helpModel.View())
 	return &Model{
 		modalType: HelpModal,
 		help:      &helpModel,
+		viewport:  viewport,
 	}
 }
 
@@ -79,10 +93,6 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		return m, nil
 	case tea.KeyMsg:
 		// We might move this to the modal themselves later...
 		if msg.String() == "esc" || msg.String() == "q" || msg.String() == "ctrl+c" {
@@ -93,6 +103,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch m.modalType {
 	case EntryModal:
 		*m.entryForm, cmd = m.entryForm.Update(msg)
@@ -101,11 +112,33 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case HelpModal:
 		*m.help, cmd = m.help.Update(msg)
 	}
+	cmds = append(cmds, cmd)
 
-	return m, cmd
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	if _, ok := msg.(tea.KeyMsg); ok {
+		// Update viewport content on key events
+		m.viewport.SetContent(m.RenderContent())
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
+
+	viewport := m.viewport.View()
+
+	scrollbar := utils.RenderScrollbar(m.viewport)
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		lipgloss.NewStyle().Width(styles.ModalWidth-5).Render(viewport),
+		scrollbar,
+	)
+}
+
+func (m Model) RenderContent() string {
 	switch m.modalType {
 	case EntryModal:
 		return m.entryForm.View()

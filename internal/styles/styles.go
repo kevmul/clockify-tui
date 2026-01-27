@@ -12,6 +12,18 @@ var (
 	Muted      = lipgloss.Color("#6B7280")
 	Background = lipgloss.Color("#1E1E1E")
 
+	// Sizes
+	PaddingSmall  = 1
+	PaddingMedium = 2
+	PaddingLarge  = 3
+
+	MarginSmall  = 1
+	MarginMedium = 2
+	MarginLarge  = 3
+
+	ModalWidth  = 60
+	ModalHeight = 20
+
 	// Text styles
 	TitleStyle = lipgloss.NewStyle().
 			Bold(true).
@@ -45,7 +57,7 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(Primary).
 			Padding(1, 2).
-			Width(60)
+			Width(ModalWidth)
 
 	// Input styles
 	FocusedInputStyle = lipgloss.NewStyle().
@@ -93,7 +105,7 @@ var (
 	NavContainerStyle = lipgloss.NewStyle().
 				BorderStyle(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("#333333")).
-				MarginBottom(1)
+				MarginBottom(0)
 
 	ActiveTabStyle = lipgloss.NewStyle().
 			Foreground(Primary).

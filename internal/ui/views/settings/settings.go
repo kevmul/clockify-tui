@@ -111,23 +111,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			return m, m.updateFocus()
 
-		case "j", "k":
-			if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
-				m.apiKeyInput, cmd = m.apiKeyInput.Update(msg)
-				return m, cmd
-			}
-
-			s := msg.String()
-			if s == "k" {
-				m.currentIndex--
-			} else {
-				m.currentIndex++
-			}
-			if m.currentIndex > saveButton {
-				m.currentIndex = apiKeyInput
-			} else if m.currentIndex < apiKeyInput {
-				m.currentIndex = saveButton
-			}
+		// case "j", "k":
+		// 	if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
+		// 		m.apiKeyInput, cmd = m.apiKeyInput.Update(msg)
+		// 		return m, cmd
+		// 	}
+		//
+		// 	s := msg.String()
+		// 	if s == "k" {
+		// 		m.currentIndex--
+		// 	} else {
+		// 		m.currentIndex++
+		// 	}
+		// 	if m.currentIndex > saveButton {
+		// 		m.currentIndex = apiKeyInput
+		// 	} else if m.currentIndex < apiKeyInput {
+		// 		m.currentIndex = saveButton
+		// 	}
 
 		case "enter":
 			if !m.showWorkspacesList {
@@ -261,16 +261,6 @@ func (m Model) View() string {
 	// Show workspaces list if active
 	if m.showWorkspacesList {
 		b.WriteString(m.renderWorkspacesList())
-		b.WriteString("\n\n")
-	}
-
-	// Current config info
-	if m.config.UserId != "" {
-		b.WriteString(styles.SuccessStyle.Render(fmt.Sprintf("✓ Current User ID: %s", m.config.UserId)))
-		b.WriteString("\n")
-	}
-	if m.config.WorkspaceId != "" {
-		b.WriteString(styles.SuccessStyle.Render(fmt.Sprintf("✓ Current Workspace ID: %s", m.config.WorkspaceId)))
 		b.WriteString("\n\n")
 	}
 

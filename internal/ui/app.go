@@ -6,15 +6,16 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
-	"os"
+	"clockify-app/internal/utils"
 
-	"golang.org/x/term"
+	// debug "clockify-app/internal/utils"
 
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/ui/components/modal"
 	"clockify-app/internal/ui/views/entries"
 	"clockify-app/internal/ui/views/settings"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -49,7 +50,8 @@ type Model struct {
 	height int
 
 	// Loading state
-	ready bool
+	ready    bool
+	viewport viewport.Model
 }
 
 func NewModel() Model {
@@ -74,7 +76,6 @@ func NewModel() Model {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		m.initializeFirstViewCmd(),
-		// settings.Init(),
 		tea.EnterAltScreen,
 	)
 }
@@ -101,9 +102,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.ready = true
+		headerHeight := 4
+		footerHeight := 1
+		verticalMarginHeight := headerHeight + footerHeight
+
+		// Update viewport size
+		if !m.ready {
+			m.viewport = viewport.New(msg.Width-1, msg.Height-verticalMarginHeight)
+			// m.viewport.YPosition = headerHeight
+			m.viewport.SetContent(m.renderContent())
+			m.width = msg.Width
+			m.height = msg.Height
+			m.ready = true
+		} else {
+			m.viewport.Width = msg.Width - 1
+			m.viewport.Height = msg.Height - verticalMarginHeight
+			m.width = msg.Width
+			m.height = msg.Height
+		}
+
+		if m.currentView == EntriesView {
+			// Let entries view handle resizing if needed
+			m.entries, cmd = m.entries.Update(msg)
+			cmds = append(cmds, cmd)
+		}
+
+		return m, nil
 
 	case tea.KeyMsg:
 		// Global keybindings
@@ -113,9 +137,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case "1":
 				m.currentView = EntriesView
+				m.viewport.SetContent(m.renderContent())
 				return m, m.entries.Init()
 			case "2":
 				m.currentView = SettingsView
+				m.viewport.SetContent(m.renderContent())
 				return m, nil
 			case "n":
 				m.showModal = true
@@ -137,6 +163,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					)
 					return m, nil
 				}
+				// Default help
 				m.modal = modal.NewHelp(
 					help.GenerateSection("Global Keys", help.Global),
 				)
@@ -147,18 +174,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case messages.UserLoadedMsg:
 		m.userId = msg.UserId
 		m.settings, cmd = m.settings.Update(msg)
+		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
 	case messages.ConfigSavedMsg:
 		m.config = msg.Config
 		m.userId = msg.UserId
 		m.workspaceId = msg.WorkspaceId
+		m.viewport.SetContent(m.renderContent())
 		_ = m.config.Save()
 		return m, nil
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
 		m.entries, cmd = m.entries.Update(msg)
+		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
 	case messages.EntrySavedMsg:
@@ -172,20 +202,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.EntriesLoadedMsg:
 		m.entries, cmd = m.entries.Update(msg)
+		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
 	case messages.EntryUpdateStartedMsg:
 		m.showModal = true
 		m.modal = modal.UpdateEntryForm(m.config, m.projects, msg.Entry)
+		m.viewport.SetContent(m.renderContent())
 		return m, nil
 
 	case messages.EntryDeleteStartedMsg:
 		m.showModal = true
 		m.modal = modal.NewDeleteConfirmation(msg.EntryId)
+		m.viewport.SetContent(m.renderContent())
 		return m, nil
 
 	case messages.ModalClosedMsg:
 		m.showModal = false
+		m.viewport.SetContent(m.renderContent())
 		return m, nil
 
 	case messages.ItemDeletedMsg:
@@ -210,48 +244,51 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case EntriesView:
 		m.entries, cmd = m.entries.Update(msg)
 	}
-
 	cmds = append(cmds, cmd)
+
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	if _, ok := msg.(tea.KeyMsg); ok {
+		// Update viewport content on key events
+		m.viewport.SetContent(m.renderContent())
+	}
+
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
+
 	if !m.ready {
 		return "Loading..."
 	}
 
 	// Create a top navigation bar
-	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
 
 	// Tabs
-	navBar := m.RenderNavBar("entries", physicalWidth)
+	navBar := m.RenderNavBar("entries", m.width)
 
-	// The actual View
-	var view string
+	// Add scrollbar
+	scrollbar := utils.RenderScrollbar(m.viewport)
 
-	// Render active view
-	switch m.currentView {
-	case SettingsView:
-		view = m.settings.View()
-	case EntriesView:
-		view = m.entries.View()
-	}
+	// The viewport already contains the view content in Update
+	viewportView := m.viewport.View()
+
+	content := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		viewportView,
+		scrollbar,
+	)
 
 	// Overlay modal if showing
 	if m.showModal && m.modal != nil {
-		view = modal.Overlay(view, m.modal.View(), m.width, m.height-8)
+		content = modal.Overlay(content, m.modal.View(), m.width, max(5, m.height-8))
 	}
-
-	contentHeight := m.height - 1
 
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		lipgloss.NewStyle().Height(contentHeight).Width(m.width).Render(
-			lipgloss.JoinVertical(
-				lipgloss.Top,
-				navBar,
-				view,
-			)),
+		navBar,
+		content,
 		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][cntrl+c]: quit"),
 	)
 }
@@ -280,17 +317,24 @@ func (m Model) RenderNavBar(activeTab string, docWidth int) string {
 
 	sep := styles.SeparatorStyle.Render("|")
 
-	leftSide := lipgloss.JoinHorizontal(
+	fullNav := lipgloss.JoinHorizontal(
 		lipgloss.Center,
 		entries,
 		sep,
 		settings,
 	)
 
-	fullNav := lipgloss.JoinHorizontal(
-		lipgloss.Center,
-		leftSide,
-	)
-
 	return styles.NavContainerStyle.Render(fullNav)
+}
+
+func (m Model) renderContent() string {
+	// Render active view
+	switch m.currentView {
+	case SettingsView:
+		return m.settings.View()
+	case EntriesView:
+		return m.entries.View()
+	}
+
+	return ""
 }
