@@ -14,7 +14,7 @@ import (
 func (c *Client) GetProjects(workspaceID string) ([]models.Project, error) {
 	// Build the endpoint URL with the workspace ID
 	pageSize := "1000" // Adjust page size as needed
-	endpoint := fmt.Sprintf("/workspaces/%s/projects?page-size=%s", workspaceID, pageSize)
+	endpoint := fmt.Sprintf("/workspaces/%s/projects?page-size=%s&archived=false", workspaceID, pageSize)
 
 	// Make the GET request
 	body, err := c.Get(endpoint)

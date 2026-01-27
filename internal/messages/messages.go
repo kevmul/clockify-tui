@@ -34,6 +34,10 @@ type TasksLoadedMsg struct {
 	Tasks []models.Task
 }
 
+type AllTasksLoadedMsg struct {
+	Tasks map[string][]models.Task // map[ProjectID][]Task
+}
+
 type EntriesLoadedMsg struct {
 	Entries []models.Entry
 }

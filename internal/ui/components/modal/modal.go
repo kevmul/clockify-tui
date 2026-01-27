@@ -100,6 +100,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return messages.ModalClosedMsg{}
 			}
 		}
+	case messages.TasksLoadedMsg:
+		// Pass to entry form if needed
+		if m.modalType == EntryModal {
+			var cmd tea.Cmd
+			*m.entryForm, cmd = m.entryForm.Update(msg)
+			m.viewport.SetContent(m.RenderContent())
+			return m, cmd
+		}
 	}
 
 	var cmd tea.Cmd

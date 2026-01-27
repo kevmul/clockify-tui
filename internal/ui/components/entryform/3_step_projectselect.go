@@ -1,6 +1,7 @@
 package entryform
 
 import (
+	"clockify-app/internal/api"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
 	"fmt"
@@ -12,8 +13,6 @@ import (
 // ================ Project Selection =================
 func (m Model) viewProjectSelect() string {
 	// Implementation of project selection view goes here
-	// title := styles.TitleStyle.Margin(0, 0).Render("Select Project")
-	// subtitle := styles.SubtitleStyle.Margin(0, 0, 1, 0).Render("Use arrow keys to navigate, Enter to select")
 
 	sb := strings.Builder{}
 
@@ -131,13 +130,14 @@ func (m Model) updateProjectSelect(msg tea.Msg) (Model, tea.Cmd) {
 			filtered := m.filterProjects()
 			if len(filtered) > 0 && m.cursor < len(filtered) {
 				m.selectedProj = filtered[m.cursor]
-				// m.selectedProj = filteredProjects[m.cursor] // Save selected project
-				// Move to next step
-				m.timeStart.Focus()
-				m.step++
-				// Reset cursor for next step
+				m.task.Focus()
+				m.cursor = 0
+				m.tasks = nil
+				m.tasksReady = false
+				m.step = stepTaskInput
 				m.cursor = 0
 			}
+			return m, api.FetchTasks(m.apiKey, m.workspaceID, m.selectedProj.ID)
 		}
 	}
 

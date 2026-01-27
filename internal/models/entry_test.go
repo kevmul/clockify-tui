@@ -65,3 +65,28 @@ func TestTimeEntryRequestSerialization(t *testing.T) {
 		t.Errorf("ProjectID mismatch: got %q, want %q", unmarshaled.ProjectID, req.ProjectID)
 	}
 }
+
+func TestIntervalTimeSerialization(t *testing.T) {
+	interval := IntervalTime{
+		Start: time.Date(2024, 1, 15, 9, 0, 0, 0, time.UTC),
+		End:   time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
+	}
+
+	data, err := json.Marshal(interval)
+	if err != nil {
+		t.Fatalf("Failed to marshal interval: %v", err)
+	}
+
+	var unmarshaled IntervalTime
+	err = json.Unmarshal(data, &unmarshaled)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal interval: %v", err)
+	}
+
+	if !unmarshaled.Start.Equal(interval.Start) {
+		t.Errorf("Start time mismatch: got %v, want %v", unmarshaled.Start, interval.Start)
+	}
+	if !unmarshaled.End.Equal(interval.End) {
+		t.Errorf("End time mismatch: got %v, want %v", unmarshaled.End, interval.End)
+	}
+}

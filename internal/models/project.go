@@ -9,4 +9,5 @@ type Project struct {
 	Color       string `json:"color"`
 	IsBillable  bool   `json:"isBillable"`
 	IsArchived  bool   `json:"isArchived"`
+	Tasks       []Task `json:"tasks,omitempty"`
 }

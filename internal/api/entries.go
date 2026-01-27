@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	debug "clockify-app/internal/utils"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -48,7 +50,7 @@ func FetchEntries(apiKey, workspaceId, userId string) tea.Cmd {
 
 // CreateTimeEntry creates a new time entry in Clockify
 // Takes all the necessary parameters and returns an error if creation fails
-func (c *Client) CreateTimeEntry(workspaceID, projectID, description, startTimeStr, endTimeStr string, date time.Time) error {
+func (c *Client) CreateTimeEntry(workspaceID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) error {
 	// Parse the time range string (e.g., "9a - 5p") into actual times
 	startTime := parseTime(startTimeStr, date)
 	endTime := parseTime(endTimeStr, date)
@@ -58,8 +60,11 @@ func (c *Client) CreateTimeEntry(workspaceID, projectID, description, startTimeS
 		Start:       startTime.Format(time.RFC3339), // Convert to RFC3339 format
 		End:         endTime.Format(time.RFC3339),
 		ProjectID:   projectID,
+		TaskID:      taskID,
 		Description: description,
 	}
+
+	debug.Log("Creating time entry with payload: %v", entry)
 
 	// Build endpoint and make POST request
 	endpoint := fmt.Sprintf("/workspaces/%s/time-entries", workspaceID)
@@ -72,7 +77,7 @@ func (c *Client) CreateTimeEntry(workspaceID, projectID, description, startTimeS
 	return nil
 }
 
-func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, description, startTimeStr, endTimeStr string, date time.Time) error {
+func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) error {
 	// Parse the time range string (e.g., "9a - 5p") into actual times
 	startTime := parseTime(startTimeStr, date)
 	endTime := parseTime(endTimeStr, date)
@@ -82,6 +87,7 @@ func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, description, s
 		Start:       startTime.Format(time.RFC3339), // Convert to RFC3339 format
 		End:         endTime.Format(time.RFC3339),
 		ProjectID:   projectID,
+		TaskID:      taskID,
 		Description: description,
 	}
 

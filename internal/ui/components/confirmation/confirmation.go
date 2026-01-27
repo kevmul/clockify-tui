@@ -40,18 +40,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "enter":
 			// Confirm deletion
 			if m.cursor == 0 {
+				// Cancel deletion
+				return m, func() tea.Msg {
+					return messages.ModalClosedMsg{}
+				}
+			} else {
 				// Perform deletion logic here
 				return m, func() tea.Msg {
 					return messages.ItemDeletedMsg{
 						ID:   m.itemToDelete,
 						Type: m.itemType,
 					}
-				}
-				// You can add actual deletion logic as needed
-			} else {
-				// Cancel deletion
-				return m, func() tea.Msg {
-					return messages.ModalClosedMsg{}
 				}
 			}
 
@@ -79,14 +78,14 @@ func (m Model) View() string {
 func (m Model) renderButtons() string {
 	if m.cursor == 0 {
 		return lipgloss.JoinHorizontal(lipgloss.Left,
-			styles.ActiveButtonStyle.MarginRight(2).Render("Delete"),
-			styles.ButtonStyle.Render("Cancel"),
+			styles.ActiveButtonStyle.MarginRight(2).Render("Cancel"),
+			styles.ButtonStyle.Render("Delete"),
 		)
 	}
 
 	return lipgloss.JoinHorizontal(lipgloss.Left,
-		styles.ButtonStyle.MarginRight(2).Render("Delete"),
-		styles.ActiveButtonStyle.Render("Cancel"),
+		styles.ButtonStyle.MarginRight(2).Render("Cancel"),
+		styles.ActiveButtonStyle.Render("Delete"),
 	)
 
 }

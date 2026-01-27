@@ -69,3 +69,15 @@ func TestConfigSaveToFile(t *testing.T) {
 		t.Errorf("APIKey mismatch: got %q, want %q", loaded.APIKey, cfg.APIKey)
 	}
 }
+
+func TestLoadConfigNotExists(t *testing.T) {
+	// Test loading config when file doesn't exist
+	// This should return a new empty config without error
+	cfg, err := LoadConfig()
+	if err != nil {
+		t.Errorf("LoadConfig should not error when file doesn't exist: %v", err)
+	}
+	if cfg == nil {
+		t.Error("LoadConfig should return empty config when file doesn't exist")
+	}
+}
