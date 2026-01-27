@@ -41,7 +41,7 @@ func (m Model) updateTimeInput(msg tea.Msg) (Model, tea.Cmd) {
 			m.timeEnd.Blur()
 			m.timeStart.Blur()
 			m.taskName.Focus()
-			m.step = stepTaskInput
+			m.step = stepConfirm
 		}
 	}
 

@@ -12,7 +12,7 @@ import (
 func (c *Client) GetTasks(workspaceID, projectID string) ([]models.Task, error) {
 	// Build the endpoint URL with the workspace ID and project ID
 	pageSize := "100" // Adjust page size as needed
-	endpoint := fmt.Sprintf("/workspaces/%s/projects/%s/tasks?page-size=%s", workspaceID, projectID, pageSize)
+	endpoint := fmt.Sprintf("/workspaces/%s/projects/%s/tasks?page-size=%s&is-active=true", workspaceID, projectID, pageSize)
 
 	// Make the GET request
 	body, err := c.Get(endpoint)
@@ -41,6 +41,25 @@ func FetchTasks(apiKey, workspaceId, projectId string) tea.Cmd {
 
 		return messages.TasksLoadedMsg{
 			Tasks: tasks,
+		}
+	}
+}
+
+func FetchTasksForAllProjects(apiKey, workspaceId string, projects []models.Project) tea.Cmd {
+	return func() tea.Msg {
+		client := NewClient(apiKey)
+		allTasks := make(map[string][]models.Task)
+
+		for _, project := range projects {
+			tasks, err := client.GetTasks(workspaceId, project.ID)
+			if err != nil {
+				return messages.ErrorMsg{Err: err}
+			}
+			allTasks[project.ID] = tasks
+		}
+
+		return messages.AllTasksLoadedMsg{
+			Tasks: allTasks,
 		}
 	}
 }

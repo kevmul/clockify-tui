@@ -2,6 +2,7 @@ package entryform
 
 import (
 	"clockify-app/internal/config"
+	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"time"
 
@@ -12,12 +13,13 @@ import (
 // These constants represent each screen in our UI flow
 // Using constants (instead of magic numbers) makes the code more readable
 const (
-	stepDateSelect    = iota // 0 - Select which date to log time for
-	stepProjectSelect        // 1 - Select which project
-	stepTimeInput            // 2 - Enter time range (e.g., "9a - 5p")
-	stepTaskInput            // 3 - Enter task description
-	stepConfirm              // 4 - Review and confirm the entry
-	stepComplete             // 5 - Show success message
+	stepDateSelect       = iota //  Select which date to log time for
+	stepDescriptionInput        //  Enter task description
+	stepProjectSelect           //  Select which project
+	stepTaskInput               //  Select a task if applicable
+	stepTimeInput               //  Enter time range (e.g., "9a - 5p")
+	stepConfirm                 //  Review and confirm the entry
+	stepComplete                //  Show success message
 )
 
 type Model struct {
@@ -27,8 +29,9 @@ type Model struct {
 	step        int
 
 	// Data from API
-	projects []models.Project // List of available projects
-	// tasks    []models.Task    // Recent task descriptions for suggestions
+	projects   []models.Project // List of available projects
+	tasks      []models.Task    //
+	tasksReady bool             // Whether tasks have been loaded
 
 	// Navigation state
 	cursor   int // Current position in lists (for arrow key navigation)
@@ -38,10 +41,12 @@ type Model struct {
 	date           time.Time       // Selected date for time entry
 	timeStart      textinput.Model // Text input for start time (e.g., "9:00 AM")
 	timeEnd        textinput.Model // Text input for end time (e.g., "5:00 PM")
+	description    textinput.Model // Text input for task description
 	taskName       textinput.Model // Text input for task description
 	projectSearch  textinput.Model // Text input for project search
 	selectedProj   models.Project  // The project user selected
 	selectedProjID int             // ID of the selected project
+	selectedTask   models.Task     // The task user selected
 	selectedEntry  models.Entry    // The time entry being edited (if any)
 
 	// Status flags
@@ -65,6 +70,12 @@ func New(cfg *config.Config, projects []models.Project) Model {
 	timeEndInput.Width = 30
 
 	// Create and configure the task name input
+	descriptionInput := textinput.New()
+	descriptionInput.Placeholder = "Enter task description"
+	descriptionInput.CharLimit = 100
+	descriptionInput.Width = 50
+
+	// Create and configure the task name input
 	taskNameInput := textinput.New()
 	taskNameInput.Placeholder = "Enter task description"
 	taskNameInput.CharLimit = 100
@@ -82,12 +93,13 @@ func New(cfg *config.Config, projects []models.Project) Model {
 		date:          time.Now(),     // Default to today
 		timeStart:     timeStartInput,
 		timeEnd:       timeEndInput,
+		description:   descriptionInput,
 		taskName:      taskNameInput,
 		projectSearch: searchInput,
 		projects:      projects,
-		// tasks:         tasks,
-		cursor:  0, // Start at first item in lists
-		editing: false,
+		cursor:        0, // Start at first item in lists
+		editing:       false,
+		tasksReady:    false,
 	}
 }
 
@@ -170,12 +182,20 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.step > stepDateSelect {
 				m.step--
 			}
+
 		}
+
+	case messages.TasksLoadedMsg:
+		m.tasks = msg.Tasks
+		m.tasksReady = true
+		return m, nil
 	}
 
 	switch m.step {
 	case stepDateSelect:
 		m, cmd = m.updateDateSelect(msg)
+	case stepDescriptionInput:
+		m, cmd = m.updateDescriptionInput(msg)
 	case stepProjectSelect:
 		m, cmd = m.updateProjectSelect(msg)
 	case stepTimeInput:
@@ -184,6 +204,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m, cmd = m.updateTaskInput(msg)
 	case stepConfirm:
 		m, cmd = m.updateConfirm(msg)
+	case stepComplete:
+		m, cmd = m.updateComplete(msg)
 	}
 
 	cmds = append(cmds, cmd)
@@ -196,6 +218,8 @@ func (m Model) View() string {
 	switch m.step {
 	case stepDateSelect:
 		s += m.viewDateSelect()
+	case stepDescriptionInput:
+		s += m.viewDescriptionInput()
 	case stepProjectSelect:
 		s += m.viewProjectSelect()
 	case stepTimeInput:
@@ -204,6 +228,8 @@ func (m Model) View() string {
 		s += m.viewTaskInput()
 	case stepConfirm:
 		s += m.viewConfirm()
+	case stepComplete:
+		s += m.viewCompletionInput()
 	default:
 		s += "Unknown step"
 	}

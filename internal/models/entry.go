@@ -26,5 +26,6 @@ type TimeEntryRequest struct {
 	Start       string `json:"start"`
 	End         string `json:"end"`
 	ProjectID   string `json:"projectId"`
+	TaskID      string `json:"taskId,omitempty"`
 	Description string `json:"description"`
 }
