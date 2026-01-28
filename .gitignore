@@ -2,3 +2,7 @@
 
 debug.log
 clockify-app
+
+# Coverage outputs
+coverage.html
+coverage.out

@@ -137,11 +137,11 @@ func (m Model) View() string {
 
 	viewport := m.viewport.View()
 
-	scrollbar := utils.RenderScrollbar(m.viewport)
+	scrollbar := utils.RenderScrollbarForModal(m.viewport)
 
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		lipgloss.NewStyle().Width(styles.ModalWidth-3).Render(viewport),
+		styles.ModalWithScrollStyle.Width(styles.ModalWidth).Render(viewport),
 		scrollbar,
 	)
 }
@@ -160,5 +160,5 @@ func (m Model) RenderContent() string {
 
 // Overlay renders a modal on top of existing content
 func Overlay(base, modal string, width, height int) string {
-	return utils.RenderWithModal(height, width, base, styles.ModalStyle.Render(modal))
+	return utils.RenderWithModal(height, width, base, modal)
 }

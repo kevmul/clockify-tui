@@ -163,29 +163,41 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 	return strings.Join(baseLines, "\n")
 }
 
-func RenderScrollbar(viewport viewport.Model) string {
+func RenderScrollbarForModal(viewport viewport.Model) string {
+	return RenderScrollbar(viewport, "┐", "┘")
+}
+
+func RenderScrollbarSimple(viewport viewport.Model) string {
+	return RenderScrollbar(viewport, "↑", "↓")
+}
+
+func RenderScrollbar(viewport viewport.Model, topchar, bottomchar string) string {
 	if viewport.TotalLineCount() <= viewport.Height {
 		// No scrollbar needed
 		return ""
 	}
-
-	// Calculate the scrollbar properties
 	totalLines := viewport.TotalLineCount()
-	viewportHeight := viewport.Height
-	scrollPercent := float64(viewport.YOffset) / float64(totalLines-viewportHeight)
+	// Add 2 to account for top and bottom borders
+	viewportHeight := viewport.Height + 2
+	scrollPercent := float64(viewport.YOffset) / float64(totalLines-viewport.Height)
 
-	// Caluclate thumb position
 	thumbHeight := max(1, (viewportHeight*viewportHeight)/totalLines)
-	thumbPosition := int(float64(viewportHeight-thumbHeight) * scrollPercent)
+	thumbPosition := int(float64(viewport.Height-thumbHeight) * scrollPercent)
 
-	// Build scrollbar
 	var scrollbar strings.Builder
 	for i := range viewportHeight {
-		if i >= thumbPosition && i < thumbPosition+thumbHeight {
-			scrollbar.WriteString(lipgloss.NewStyle().Foreground(styles.Secondary).Render("█"))
+		var char string
+		if i == 0 {
+			char = topchar // Top corner
+		} else if i == viewportHeight-1 {
+			char = bottomchar // Bottom corner
+		} else if i-1 >= thumbPosition && i-1 < thumbPosition+thumbHeight {
+			char = "█" // Thumb (offset by 1 to account for top corner)
 		} else {
-			scrollbar.WriteString(lipgloss.NewStyle().Foreground(styles.Muted).Render("│"))
+			char = "│" // Normal border
 		}
+
+		scrollbar.WriteString(lipgloss.NewStyle().Foreground(styles.Primary).Render(char))
 		if i < viewportHeight-1 {
 			scrollbar.WriteString("\n")
 		}

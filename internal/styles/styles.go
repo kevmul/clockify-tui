@@ -4,13 +4,23 @@ import "github.com/charmbracelet/lipgloss"
 
 var (
 	// Colors
-	Primary    = lipgloss.Color("#7C3AED")
-	Secondary  = lipgloss.Color("#EC4899")
-	Success    = lipgloss.Color("#10B981")
-	Error      = lipgloss.Color("#EF4444")
-	Warning    = lipgloss.Color("#F59E0B")
-	Muted      = lipgloss.Color("#6B7280")
-	Background = lipgloss.Color("#1E1E1E")
+	Primary      = lipgloss.Color("#7C3AED")
+	Secondary    = lipgloss.Color("#EC4899")
+	Success      = lipgloss.Color("#10B981")
+	Error        = lipgloss.Color("#EF4444")
+	Warning      = lipgloss.Color("#F59E0B")
+	Muted        = lipgloss.Color("#6B7280")
+	Background   = lipgloss.Color("#1E1E1E")
+	CustomBorder = lipgloss.Border{
+		Top:         "─",
+		Bottom:      "─",
+		Left:        "│",
+		TopLeft:     "┌",
+		TopRight:    "┐",
+		BottomLeft:  "└",
+		BottomRight: "┘",
+		// Right:   "│",
+	}
 
 	// Sizes
 	PaddingSmall  = 1
@@ -55,9 +65,23 @@ var (
 
 	ModalStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
+			BorderLeft(true).
+			BorderRight(false).
+			BorderTop(true).
+			BorderBottom(true).
 			BorderForeground(Primary).
 			Padding(0, 1).
 			Width(ModalWidth)
+
+	ModalWithScrollStyle = lipgloss.NewStyle().
+				BorderStyle(CustomBorder).
+				BorderLeft(true).
+				BorderRight(false).
+				BorderTop(true).
+				BorderBottom(true).
+				BorderForeground(Primary).
+				PaddingLeft(1).
+				Width(ModalWidth)
 
 	// Input styles
 	FocusedInputStyle = lipgloss.NewStyle().

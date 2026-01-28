@@ -269,8 +269,12 @@ func (m Model) View() string {
 	navBar := m.RenderNavBar("entries", m.width)
 
 	// Add scrollbar
-	scrollbar := utils.RenderScrollbar(m.viewport)
+	scrollbar := ""
 
+	if m.currentView != EntriesView {
+		// No scrollbar for entries view
+		scrollbar = utils.RenderScrollbarSimple(m.viewport)
+	}
 	// The viewport already contains the view content in Update
 	viewportView := m.viewport.View()
 
