@@ -1,7 +1,13 @@
 .DS_Store
 
-debug.log
+# Binaries
 clockify-app
+
+# Logs
+debug.log
+
+# AI tooling
+.kiro/
 
 # Coverage outputs
 coverage.html
