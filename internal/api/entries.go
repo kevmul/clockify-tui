@@ -1,6 +1,7 @@
 package api
 
 import (
+	"clockify-app/internal/cache"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"encoding/json"
@@ -35,6 +36,14 @@ func (c *Client) GetEntries(workspaceId, userId string) ([]models.Entry, error) 
 // FetchEntries returns a command that fetches time entries for a user in a workspace
 func FetchEntries(apiKey, workspaceId, userId string) tea.Cmd {
 	return func() tea.Msg {
+		// Return cached entries if available
+		cache := cache.GetInstance()
+		if cachedEntries := cache.GetEntries(); cachedEntries != nil {
+			return messages.EntriesLoadedMsg{
+				Entries: cachedEntries,
+			}
+		}
+
 		client := NewClient(apiKey)
 		entries, err := client.GetEntries(workspaceId, userId)
 
@@ -42,6 +51,7 @@ func FetchEntries(apiKey, workspaceId, userId string) tea.Cmd {
 			return messages.ErrorMsg{Err: err}
 		}
 
+		cache.SetEntries(entries)
 		return messages.EntriesLoadedMsg{
 			Entries: entries,
 		}

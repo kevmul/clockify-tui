@@ -1,6 +1,7 @@
 package api
 
 import (
+	"clockify-app/internal/cache"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"encoding/json"
@@ -34,12 +35,22 @@ func (c *Client) GetProjects(workspaceID string) ([]models.Project, error) {
 // FetchProjects returns a command that fetches all projects for a given workspace
 func FetchProjects(apiKey, workspaceId string) tea.Cmd {
 	return func() tea.Msg {
+		// Return cached projects if available
+		cache := cache.GetInstance()
+		if cachedProjects := cache.GetProjects(); cachedProjects != nil {
+			return messages.ProjectsLoadedMsg{
+				Projects: cachedProjects,
+			}
+		}
+
 		client := NewClient(apiKey)
 		projects, err := client.GetProjects(workspaceId)
 
 		if err != nil {
 			return messages.ErrorMsg{Err: err}
 		}
+
+		cache.SetProjects(projects)
 
 		return messages.ProjectsLoadedMsg{
 			Projects: projects,
