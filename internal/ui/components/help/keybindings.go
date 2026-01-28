@@ -18,7 +18,7 @@ type GlobalKeyMap struct {
 var Global = GlobalKeyMap{
 	Navigation: key.NewBinding(
 		key.WithKeys("1", "2"),
-		key.WithHelp("1 || 2", "Switch view"),
+		key.WithHelp("1 - 0", "Switch view"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),

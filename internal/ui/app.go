@@ -7,12 +7,15 @@ import (
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
 	"clockify-app/internal/utils"
+	"strconv"
+	"strings"
 
 	// debug "clockify-app/internal/utils"
 
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/ui/components/modal"
 	"clockify-app/internal/ui/views/entries"
+	"clockify-app/internal/ui/views/projects"
 	"clockify-app/internal/ui/views/settings"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -25,7 +28,19 @@ type View int
 const (
 	SettingsView View = iota
 	EntriesView
+	ProjectsView
 )
+
+type Page struct {
+	Label string
+	Key   View
+}
+
+var pages = []Page{
+	{"Entries", EntriesView},
+	{"Projects", ProjectsView},
+	{"Settings", SettingsView},
+}
 
 type Model struct {
 	// Config and shared state
@@ -38,8 +53,9 @@ type Model struct {
 	currentView View
 
 	// View models
-	settings settings.Model
-	entries  entries.Model
+	settingsView settings.Model
+	entriesView  entries.Model
+	projectsView projects.Model
 
 	// Modal state
 	modal     *modal.Model
@@ -65,11 +81,12 @@ func NewModel() Model {
 	}
 
 	return Model{
-		config:      cfg,
-		currentView: currentView,
-		settings:    settings.New(cfg),
-		entries:     entries.New(cfg),
-		ready:       false,
+		config:       cfg,
+		currentView:  currentView,
+		settingsView: settings.New(cfg),
+		entriesView:  entries.New(cfg),
+		projectsView: projects.New(cfg),
+		ready:        false,
 	}
 }
 
@@ -90,8 +107,10 @@ func (m Model) initializeFirstViewCmd() tea.Cmd {
 				m.config.APIKey,
 				m.config.WorkspaceId,
 			),
-			m.entries.Init(),
+			m.entriesView.Init(),
 		)
+	case ProjectsView:
+		return m.projectsView.Init()
 	}
 	return nil
 }
@@ -121,11 +140,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.height = msg.Height
 		}
 
-		if m.currentView == EntriesView {
-			// Let entries view handle resizing if needed
-			m.entries, cmd = m.entries.Update(msg)
-			cmds = append(cmds, cmd)
-		}
+		m.projectsView, cmd = m.projectsView.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.entriesView, cmd = m.entriesView.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.projectsView, cmd = m.projectsView.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.settingsView, cmd = m.settingsView.Update(msg)
+		cmds = append(cmds, cmd)
 
 		return m, nil
 
@@ -135,14 +160,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "ctrl+c", "q":
 				return m, tea.Quit
-			case "1":
-				m.currentView = EntriesView
-				m.viewport.SetContent(m.renderContent())
-				return m, m.entries.Init()
-			case "2":
-				m.currentView = SettingsView
-				m.viewport.SetContent(m.renderContent())
-				return m, nil
+			case "1", "2", "3":
+				if num, err := strconv.Atoi(msg.String()); err == nil {
+					m.currentView = pages[num-1].Key
+					m.viewport.SetContent(m.renderContent())
+					// Initialize view if needed
+					switch m.currentView {
+					case EntriesView:
+						return m, tea.Sequence(
+							api.FetchProjects(
+								m.config.APIKey,
+								m.config.WorkspaceId,
+							),
+							m.entriesView.Init(),
+						)
+					case ProjectsView:
+						return m, m.projectsView.Init()
+					case SettingsView:
+						return m, settings.Init()
+					}
+					return m, nil
+				}
 			case "n":
 				m.showModal = true
 				m.modal = modal.NewEntryForm(m.config, m.projects)
@@ -173,7 +211,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.UserLoadedMsg:
 		m.userId = msg.UserId
-		m.settings, cmd = m.settings.Update(msg)
+		m.settingsView, cmd = m.settingsView.Update(msg)
 		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
@@ -187,13 +225,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
-		m.entries, cmd = m.entries.Update(msg)
+		if m.currentView == EntriesView {
+			// Let entries view handle the loaded projects
+			m.entriesView, cmd = m.entriesView.Update(msg)
+		} else if m.currentView == ProjectsView {
+			m.projectsView, cmd = m.projectsView.Update(msg)
+		}
 		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
 	case messages.EntrySavedMsg:
 		m.showModal = false
-		m.entries, cmd = m.entries.Update(msg)
+		m.entriesView, cmd = m.entriesView.Update(msg)
 		return m, api.FetchEntries(
 			m.config.APIKey,
 			m.config.WorkspaceId,
@@ -201,7 +244,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		)
 
 	case messages.EntriesLoadedMsg:
-		m.entries, cmd = m.entries.Update(msg)
+		m.entriesView, cmd = m.entriesView.Update(msg)
 		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
@@ -226,7 +269,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.showModal = false
 		if msg.Type == "entry" {
 			// Let entries view handle the deletion
-			m.entries, cmd = m.entries.Update(msg)
+			m.entriesView, cmd = m.entriesView.Update(msg)
 			return m, cmd
 		}
 	}
@@ -240,9 +283,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Route to active view
 	switch m.currentView {
 	case SettingsView:
-		m.settings, cmd = m.settings.Update(msg)
+		m.settingsView, cmd = m.settingsView.Update(msg)
+	case ProjectsView:
+		m.projectsView, cmd = m.projectsView.Update(msg)
 	case EntriesView:
-		m.entries, cmd = m.entries.Update(msg)
+		m.entriesView, cmd = m.entriesView.Update(msg)
 	}
 	cmds = append(cmds, cmd)
 
@@ -316,16 +361,21 @@ func RenderTab(label, key string, isActive bool) string {
 // Example helper function to render the full nav bar
 func (m Model) RenderNavBar(activeTab string, docWidth int) string {
 
-	entries := RenderTab("entries", "1", m.currentView == EntriesView)
-	settings := RenderTab("settings", "2", m.currentView == SettingsView)
+	tabs := []string{}
+
+	for i, page := range pages {
+		if page.Key == m.currentView {
+			activeTab = page.Label
+		}
+		tab := RenderTab(page.Label, string(rune('1'+i)), page.Label == activeTab)
+		tabs = append(tabs, tab)
+	}
 
 	sep := styles.SeparatorStyle.Render("|")
 
 	fullNav := lipgloss.JoinHorizontal(
 		lipgloss.Center,
-		entries,
-		sep,
-		settings,
+		strings.Join(tabs, sep),
 	)
 
 	return styles.NavContainerStyle.Render(fullNav)
@@ -335,9 +385,11 @@ func (m Model) renderContent() string {
 	// Render active view
 	switch m.currentView {
 	case SettingsView:
-		return m.settings.View()
+		return m.settingsView.View()
+	case ProjectsView:
+		return m.projectsView.View()
 	case EntriesView:
-		return m.entries.View()
+		return m.entriesView.View()
 	}
 
 	return ""

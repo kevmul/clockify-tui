@@ -1,12 +1,11 @@
 package api
 
 import (
+	"clockify-app/internal/cache"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"encoding/json"
 	"fmt"
-
-	debug "clockify-app/internal/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -34,6 +33,14 @@ func (c *Client) GetTasks(workspaceID, projectID string) ([]models.Task, error) 
 // FetchTasks returns a command that fetches all tasks for a given project in a workspace
 func FetchTasks(apiKey, workspaceId, projectId string) tea.Cmd {
 	return func() tea.Msg {
+
+		cache := cache.GetInstance()
+		if cachedTasks := cache.GetProjectTasks(projectId); cachedTasks != nil {
+			return messages.TasksLoadedMsg{
+				Tasks: cachedTasks,
+			}
+		}
+
 		client := NewClient(apiKey)
 		tasks, err := client.GetTasks(workspaceId, projectId)
 
@@ -41,7 +48,7 @@ func FetchTasks(apiKey, workspaceId, projectId string) tea.Cmd {
 			return messages.ErrorMsg{Err: err}
 		}
 
-		debug.Log("Fetched tasks: %v", tasks)
+		cache.SetProjectTasks(projectId, tasks)
 
 		return messages.TasksLoadedMsg{
 			Tasks: tasks,
