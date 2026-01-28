@@ -11,26 +11,28 @@ var (
 	once     sync.Once
 )
 
+var minTilExpired = 2 * time.Minute
+
 type ClockifyCache struct {
 	mu sync.RWMutex
 
 	// Cache for entries and projects
-	Entries  []models.Entry
-	Projects []models.Project
+	Entries  CachedItem[[]models.Entry]
+	Projects CachedItem[[]models.Project]
 
 	// Cache for project tasks (loaded on demand)
-	ProjectTasks map[string]CachedItem
+	ProjectTasks map[string]CachedItem[[]models.Task]
 }
 
-type CachedItem struct {
-	Data     interface{}
+type CachedItem[T any] struct {
+	Data     T
 	CachedAt time.Time
 }
 
 func GetInstance() *ClockifyCache {
 	once.Do(func() {
 		instance = &ClockifyCache{
-			ProjectTasks: make(map[string]CachedItem),
+			ProjectTasks: make(map[string]CachedItem[[]models.Task]),
 		}
 	})
 	return instance
@@ -44,14 +46,23 @@ func (c *ClockifyCache) SetEntries(entries []models.Entry) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.Entries = entries
+	c.Entries = CachedItem[[]models.Entry]{
+		Data:     entries,
+		CachedAt: time.Now(),
+	}
 }
 
 func (c *ClockifyCache) GetEntries() []models.Entry {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	return c.Entries
+	if len(c.Entries.Data) > 0 {
+		if time.Since(c.Entries.CachedAt) < minTilExpired {
+			return c.Entries.Data
+		}
+	}
+
+	return nil
 }
 
 // ================================
@@ -62,14 +73,23 @@ func (c *ClockifyCache) SetProjects(projects []models.Project) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.Projects = projects
+	c.Projects = CachedItem[[]models.Project]{
+		Data:     projects,
+		CachedAt: time.Now(),
+	}
 }
 
 func (c *ClockifyCache) GetProjects() []models.Project {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	return c.Projects
+	if len(c.Projects.Data) > 0 {
+		if time.Since(c.Projects.CachedAt) < minTilExpired {
+			return c.Projects.Data
+		}
+	}
+
+	return nil
 }
 
 // ================================
@@ -80,18 +100,21 @@ func (c *ClockifyCache) SetProjectTasks(projectID string, tasks []models.Task) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.ProjectTasks[projectID] = CachedItem{
+	c.ProjectTasks[projectID] = CachedItem[[]models.Task]{
 		Data:     tasks,
 		CachedAt: time.Now(),
 	}
 }
 
-func (c *ClockifyCache) GetProjectTasks(projectID string) any {
+func (c *ClockifyCache) GetProjectTasks(projectID string) []models.Task {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	if item, exists := c.ProjectTasks[projectID]; exists {
-		return item.Data
+		// Check if expired (5 minutes)
+		if time.Since(item.CachedAt) < minTilExpired {
+			return item.Data
+		}
 	}
 
 	return nil
