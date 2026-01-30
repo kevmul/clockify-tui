@@ -172,26 +172,24 @@ func RenderScrollbarSimple(viewport viewport.Model) string {
 }
 
 func RenderScrollbar(viewport viewport.Model, topchar, bottomchar string) string {
-	if viewport.TotalLineCount() <= viewport.Height {
-		// No scrollbar needed
-		return ""
-	}
-	totalLines := viewport.TotalLineCount()
+	var scrollbar strings.Builder
 	// Add 2 to account for top and bottom borders
 	viewportHeight := viewport.Height + 2
+	totalLines := viewport.TotalLineCount()
 	scrollPercent := float64(viewport.YOffset) / float64(totalLines-viewport.Height)
 
 	thumbHeight := max(1, (viewportHeight*viewportHeight)/totalLines)
 	thumbPosition := int(float64(viewport.Height-thumbHeight) * scrollPercent)
 
-	var scrollbar strings.Builder
+	requiresScrollbar := viewport.TotalLineCount() > viewport.Height
+
 	for i := range viewportHeight {
 		var char string
 		if i == 0 {
 			char = topchar // Top corner
 		} else if i == viewportHeight-1 {
 			char = bottomchar // Bottom corner
-		} else if i-1 >= thumbPosition && i-1 < thumbPosition+thumbHeight {
+		} else if requiresScrollbar && i-1 >= thumbPosition && i-1 < thumbPosition+thumbHeight {
 			char = "█" // Thumb (offset by 1 to account for top corner)
 		} else {
 			char = "│" // Normal border
