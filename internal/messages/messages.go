@@ -19,6 +19,16 @@ type ConfigLoadedMsg struct {
 }
 
 // =====================================
+// View messages
+// =====================================
+
+type SwitchViewMsg struct {
+	View int // e.g., 0 = SettingsView, 1 = EntriesView, etc.
+}
+
+type ExitViewMsg struct{}
+
+// =====================================
 // Data Loading messages
 // =====================================
 
@@ -28,6 +38,10 @@ type UserLoadedMsg struct {
 
 type ProjectsLoadedMsg struct {
 	Projects []models.Project
+}
+
+type ProjectSelectedMsg struct {
+	Project models.Project
 }
 
 type TasksLoadedMsg struct {
@@ -65,6 +79,7 @@ type EntryDeletedMsg struct {
 type EntryUpdateStartedMsg struct {
 	Entry models.Entry
 }
+
 type EntryUpdatedMsg struct {
 	Entry models.Entry
 }

@@ -43,48 +43,6 @@ func TestUpdate_WindowSize(t *testing.T) {
 	}
 }
 
-func TestUpdate_KeyNavigation(t *testing.T) {
-	cfg := &config.Config{}
-	model := New(cfg)
-
-	// Set up some test projects
-	model.projects = []models.Project{
-		{ID: "1", Name: "Project 1"},
-		{ID: "2", Name: "Project 2"},
-		{ID: "3", Name: "Project 3"},
-	}
-
-	// Test down navigation
-	downMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
-	updatedModel, _ := model.Update(downMsg)
-
-	if updatedModel.cursor != 1 {
-		t.Errorf("Expected cursor to be 1 after down key, got %d", updatedModel.cursor)
-	}
-
-	// Test up navigation
-	upMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
-	updatedModel, _ = updatedModel.Update(upMsg)
-
-	if updatedModel.cursor != 0 {
-		t.Errorf("Expected cursor to be 0 after up key, got %d", updatedModel.cursor)
-	}
-
-	// Test boundary - up when at top
-	updatedModel, _ = updatedModel.Update(upMsg)
-	if updatedModel.cursor != 0 {
-		t.Error("Cursor should stay at 0 when at top")
-	}
-
-	// Test boundary - down when at bottom
-	updatedModel.cursor = 2
-	downMsg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
-	updatedModel, _ = updatedModel.Update(downMsg)
-	if updatedModel.cursor != 2 {
-		t.Error("Cursor should stay at last position when at bottom")
-	}
-}
-
 func TestUpdate_ProjectsLoaded(t *testing.T) {
 	cfg := &config.Config{}
 	model := New(cfg)

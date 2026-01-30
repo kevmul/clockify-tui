@@ -4,6 +4,7 @@ import (
 	"clockify-app/internal/cache"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	debug "clockify-app/internal/utils"
 	"encoding/json"
 	"fmt"
 
@@ -33,6 +34,8 @@ func (c *Client) GetTasks(workspaceID, projectID string) ([]models.Task, error) 
 // FetchTasks returns a command that fetches all tasks for a given project in a workspace
 func FetchTasks(apiKey, workspaceId, projectId string) tea.Cmd {
 	return func() tea.Msg {
+
+		debug.Log("Fetching tasks for project ID: %s", projectId)
 
 		cache := cache.GetInstance()
 		if cachedTasks := cache.GetProjectTasks(projectId); cachedTasks != nil {

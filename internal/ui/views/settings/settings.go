@@ -97,6 +97,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.err = nil
 
 			s := msg.String()
+			if m.currentIndex == apiKeyInput && !m.apiKeyLocked {
+				// Update API key input if editing
+				m.apiKeyInput, cmd = m.apiKeyInput.Update(msg)
+				return m, cmd
+			}
 			if s == "up" || s == "shift+tab" {
 				m.currentIndex--
 			} else {
@@ -229,6 +234,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	}
 
+	switch m.currentIndex {
+	case apiKeyInput:
+		cmds = append(cmds, m.apiKeyInput.Focus())
+	}
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -312,9 +322,9 @@ func (m Model) renderInput(input textinput.Model, index focusIndex) string {
 		}
 	}
 	if m.currentIndex == index {
-		return styles.FocusedInputStyle.Render(rendered)
+		return styles.FocusedInputStyle.Width(50).Render(rendered)
 	}
-	return styles.BlurredInputStyle.Render(rendered)
+	return styles.BlurredInputStyle.Width(50).Render(rendered)
 }
 
 // Helper to render the save button with focus style

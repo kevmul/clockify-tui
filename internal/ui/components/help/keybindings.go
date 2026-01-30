@@ -30,11 +30,11 @@ var Global = GlobalKeyMap{
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
-		key.WithHelp("↑/k", "Move up"),
+		key.WithHelp("↑/k", "Move Viewport up"),
 	),
 	Down: key.NewBinding(
 		key.WithKeys("down", "j"),
-		key.WithHelp("↓/j", "Move down"),
+		key.WithHelp("↓/j", "Move Viewport down"),
 	),
 	Esc: key.NewBinding(
 		key.WithKeys("esc"),
@@ -89,6 +89,56 @@ var Entry = EntryKeyMap{
 	Delete: key.NewBinding(
 		key.WithKeys("d"),
 		key.WithHelp("d", "Delete entry"),
+	),
+}
+
+// =======================================
+// Projects Key Bindings
+// =======================================
+
+type ProjectsKeyMap struct {
+	Enter key.Binding
+	Up    key.Binding
+	Down  key.Binding
+	Left  key.Binding
+	Right key.Binding
+}
+
+var Projects = ProjectsKeyMap{
+	Enter: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("<enter>", "Open Project"),
+	),
+	Up: key.NewBinding(
+		key.WithKeys("up", "k"),
+		key.WithHelp("↑/k", "Move up"),
+	),
+	Down: key.NewBinding(
+		key.WithKeys("down", "j"),
+		key.WithHelp("↓/j", "Move down"),
+	),
+	Left: key.NewBinding(
+		key.WithKeys("left", "h"),
+		key.WithHelp("←/h", "Paginate Left"),
+	),
+	Right: key.NewBinding(
+		key.WithKeys("right", "l"),
+		key.WithHelp("→/l", "Paginate Right"),
+	),
+}
+
+// =======================================
+// Project Single Key Bindings
+// =======================================
+
+type ProjectKeyMap struct {
+	Back key.Binding
+}
+
+var Project = ProjectKeyMap{
+	Back: key.NewBinding(
+		key.WithKeys("b", "esc"),
+		key.WithHelp("b/<esc>", "Back to Projects"),
 	),
 }
 
