@@ -18,7 +18,6 @@ type Model struct {
 	config   *config.Config
 	projects []models.Project
 	entries  []models.Entry
-	cursor   int
 
 	list list.Model
 }
@@ -59,20 +58,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "j", "down":
-			// Handle down navigation
-			if m.cursor < len(m.entries)-1 {
-				m.cursor++
-			}
-		case "k", "up":
-			// Handle up navigation
-			if m.cursor > 0 {
-				m.cursor--
-			}
 		case "e":
 			// Edit the selected entry
 			if len(m.entries) > 0 {
-				selectedEntry := m.entries[m.cursor]
+				selectedEntry := m.entries[m.list.Index()]
 				// Open the edit modal (not implemented here)
 				return m, func() tea.Msg {
 					return messages.EntryUpdateStartedMsg{Entry: selectedEntry}
@@ -81,7 +70,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "d":
 			// Delete the selected entry
 			if len(m.entries) > 0 {
-				selectedEntry := m.entries[m.cursor]
+				selectedEntry := m.entries[m.list.Index()]
 				// Open the delete confirmation modal (not implemented here)
 				return m, func() tea.Msg {
 					return messages.EntryDeleteStartedMsg{EntryId: selectedEntry.ID}

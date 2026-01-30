@@ -14,7 +14,6 @@ import (
 
 type Model struct {
 	config   *config.Config
-	cursor   int
 	projects []models.Project
 	list     list.Model
 	ready    bool
@@ -68,15 +67,14 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "j", "down":
-			// Handle down navigation
-			if m.cursor < len(m.projects)-1 {
-				m.cursor++
-			}
-		case "k", "up":
-			// Handle up navigation
-			if m.cursor > 0 {
-				m.cursor--
+		case "enter": // Open selected project
+			if len(m.projects) > 0 {
+				selectedProject := m.projects[m.list.Index()]
+				return m, func() tea.Msg {
+					return messages.ProjectSelectedMsg{
+						Project: selectedProject,
+					}
+				}
 			}
 		}
 
