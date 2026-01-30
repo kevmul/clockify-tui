@@ -47,6 +47,7 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 			// cmds = append(cmds, cmd)
 
 		case "esc", "b": // Go back to projects view
+			m.ready = false
 			cmds = append(cmds, func() tea.Msg { return messages.ExitViewMsg{} })
 		}
 

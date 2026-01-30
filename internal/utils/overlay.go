@@ -164,17 +164,17 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 }
 
 func RenderScrollbarForModal(viewport viewport.Model) string {
-	return RenderScrollbar(viewport, styles.CustomBorder.TopRight, styles.CustomBorder.BottomRight)
+	return RenderScrollbar(viewport, 2, styles.CustomBorder.TopRight, styles.CustomBorder.BottomRight)
 }
 
 func RenderScrollbarSimple(viewport viewport.Model) string {
-	return RenderScrollbar(viewport, "↑", "↓")
+	return RenderScrollbar(viewport, 0, "↑", "↓")
 }
 
-func RenderScrollbar(viewport viewport.Model, topchar, bottomchar string) string {
+func RenderScrollbar(viewport viewport.Model, offset int, topchar, bottomchar string) string {
 	var scrollbar strings.Builder
 	// Add 2 to account for top and bottom borders
-	viewportHeight := viewport.Height + 2
+	viewportHeight := viewport.Height + offset
 	totalLines := viewport.TotalLineCount()
 	scrollPercent := float64(viewport.YOffset) / float64(totalLines-viewport.Height)
 
