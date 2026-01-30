@@ -164,7 +164,7 @@ func RenderWithModal(height, width int, baseContent string, modal string) string
 }
 
 func RenderScrollbarForModal(viewport viewport.Model) string {
-	return RenderScrollbar(viewport, "┐", "┘")
+	return RenderScrollbar(viewport, styles.CustomBorder.TopRight, styles.CustomBorder.BottomRight)
 }
 
 func RenderScrollbarSimple(viewport viewport.Model) string {

@@ -15,11 +15,11 @@ var (
 		Top:         "─",
 		Bottom:      "─",
 		Left:        "│",
-		TopLeft:     "┌",
-		TopRight:    "┐",
-		BottomLeft:  "└",
-		BottomRight: "┘",
-		// Right:   "│",
+		TopLeft:     "╭",
+		TopRight:    "╮",
+		BottomLeft:  "╰",
+		BottomRight: "╯",
+		Right:       "│",
 	}
 
 	// Sizes
@@ -66,7 +66,7 @@ var (
 	ModalStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderLeft(true).
-			BorderRight(false).
+			BorderRight(true).
 			BorderTop(true).
 			BorderBottom(true).
 			BorderForeground(Primary).

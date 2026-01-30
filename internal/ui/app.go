@@ -393,7 +393,7 @@ func (m Model) View() string {
 
 	// Overlay modal if showing
 	if m.showModal && m.modal != nil {
-		content = modal.Overlay(content, m.modal.View(), m.width, m.height-5)
+		content = utils.RenderWithModal(m.height-5, m.width, content, m.modal.View())
 	}
 
 	return lipgloss.JoinVertical(

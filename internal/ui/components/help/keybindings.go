@@ -30,11 +30,11 @@ var Global = GlobalKeyMap{
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
-		key.WithHelp("↑/k", "Move up"),
+		key.WithHelp("↑/k", "Move Viewport up"),
 	),
 	Down: key.NewBinding(
 		key.WithKeys("down", "j"),
-		key.WithHelp("↓/j", "Move down"),
+		key.WithHelp("↓/j", "Move Viewport down"),
 	),
 	Esc: key.NewBinding(
 		key.WithKeys("esc"),
@@ -100,6 +100,8 @@ type ProjectsKeyMap struct {
 	Enter key.Binding
 	Up    key.Binding
 	Down  key.Binding
+	Left  key.Binding
+	Right key.Binding
 }
 
 var Projects = ProjectsKeyMap{
@@ -114,6 +116,14 @@ var Projects = ProjectsKeyMap{
 	Down: key.NewBinding(
 		key.WithKeys("down", "j"),
 		key.WithHelp("↓/j", "Move down"),
+	),
+	Left: key.NewBinding(
+		key.WithKeys("left", "h"),
+		key.WithHelp("←/h", "Paginate Left"),
+	),
+	Right: key.NewBinding(
+		key.WithKeys("right", "l"),
+		key.WithHelp("→/l", "Paginate Right"),
 	),
 }
 
