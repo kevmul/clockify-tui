@@ -96,27 +96,31 @@ func (m Model) updateTimeEntry() tea.Cmd {
 func createTimeEntry(apiKey, workspaceID, projectID, taskID, description, startTime, endTime string, date time.Time) tea.Cmd {
 	return func() tea.Msg {
 		client := api.NewClient(apiKey)
-		err := client.CreateTimeEntry(workspaceID, projectID, taskID, description, startTime, endTime, date)
+		entry, err := client.CreateTimeEntry(workspaceID, projectID, taskID, description, startTime, endTime, date)
 
 		if err != nil {
 			return messages.ErrorMsg{Err: err}
 		}
 
 		// Success - return success message
-		return messages.EntrySavedMsg{}
+		return messages.EntrySavedMsg{
+			Entry: entry,
+		}
 	}
 }
 
 func updateTimeEntry(apiKey, workspaceID, entryID, projectID, taskID, description, startTime, endTime string, date time.Time) tea.Cmd {
 	return func() tea.Msg {
 		client := api.NewClient(apiKey)
-		err := client.UpdateTimeEntry(workspaceID, entryID, projectID, taskID, description, startTime, endTime, date)
+		entry, err := client.UpdateTimeEntry(workspaceID, entryID, projectID, taskID, description, startTime, endTime, date)
 
 		if err != nil {
 			return messages.ErrorMsg{Err: err}
 		}
 
 		// Success - return success message
-		return messages.EntrySavedMsg{}
+		return messages.EntryUpdatedMsg{
+			Entry: entry,
+		}
 	}
 }

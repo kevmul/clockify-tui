@@ -2,6 +2,7 @@ package ui
 
 import (
 	"clockify-app/internal/api"
+	"clockify-app/internal/cache"
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
@@ -9,8 +10,6 @@ import (
 	"clockify-app/internal/utils"
 	"strconv"
 	"strings"
-
-	// debug "clockify-app/internal/utils"
 
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/ui/components/modal"
@@ -225,10 +224,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
-		if m.currentView == EntriesView {
+		switch m.currentView {
+		case EntriesView:
 			// Let entries view handle the loaded projects
 			m.entriesView, cmd = m.entriesView.Update(msg)
-		} else if m.currentView == ProjectsView {
+		case ProjectsView:
 			m.projectsView, cmd = m.projectsView.Update(msg)
 		}
 		m.viewport.SetContent(m.renderContent())
@@ -236,6 +236,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.EntrySavedMsg:
 		m.showModal = false
+		cache := cache.GetInstance()
+		cache.AddEntry(msg.Entry)
+		m.entriesView, cmd = m.entriesView.Update(msg)
+		return m, api.FetchEntries(
+			m.config.APIKey,
+			m.config.WorkspaceId,
+			m.config.UserId,
+		)
+
+	case messages.EntryUpdatedMsg:
+		m.showModal = false
+		cache := cache.GetInstance()
+		cache.UpdateEntry(msg.Entry)
 		m.entriesView, cmd = m.entriesView.Update(msg)
 		return m, api.FetchEntries(
 			m.config.APIKey,
@@ -267,8 +280,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.ItemDeletedMsg:
 		m.showModal = false
-		if msg.Type == "entry" {
+		switch msg.Type {
+		case "entry":
 			// Let entries view handle the deletion
+			cache := cache.GetInstance()
+			cache.DeleteEntry(msg.ID)
 			m.entriesView, cmd = m.entriesView.Update(msg)
 			return m, cmd
 		}

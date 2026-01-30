@@ -66,7 +66,7 @@ type EntryUpdateStartedMsg struct {
 	Entry models.Entry
 }
 type EntryUpdatedMsg struct {
-	Entries models.Entry
+	Entry models.Entry
 }
 
 // =====================================

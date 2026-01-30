@@ -38,6 +38,15 @@ func GetInstance() *ClockifyCache {
 	return instance
 }
 
+func (c *ClockifyCache) Clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.Entries = CachedItem[[]models.Entry]{}
+	c.Projects = CachedItem[[]models.Project]{}
+	c.ProjectTasks = make(map[string]CachedItem[[]models.Task])
+}
+
 // ================================
 // Entries Cache Methods
 // ================================
@@ -50,6 +59,50 @@ func (c *ClockifyCache) SetEntries(entries []models.Entry) {
 		Data:     entries,
 		CachedAt: time.Now(),
 	}
+}
+
+func (c *ClockifyCache) AddEntry(entry models.Entry) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Prepend the new entry into the cached entries
+	c.Entries.Data = append([]models.Entry{entry}, c.Entries.Data...)
+	c.Entries.CachedAt = time.Now()
+}
+
+func (c *ClockifyCache) UpdateEntry(updatedEntry models.Entry) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Find and update the entry in the cached entries
+	for i, entry := range c.Entries.Data {
+		if entry.ID == updatedEntry.ID {
+			c.Entries.Data[i] = updatedEntry
+			c.Entries.CachedAt = time.Now()
+			return
+		}
+	}
+}
+
+func (c *ClockifyCache) DeleteEntry(entryID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Find and remove the entry from the cached Entries
+	for i, entry := range c.Entries.Data {
+		if entry.ID == entryID {
+			c.Entries.Data = append(c.Entries.Data[:i], c.Entries.Data[i+1:]...)
+			c.Entries.CachedAt = time.Now()
+			return
+		}
+	}
+}
+
+func (c *ClockifyCache) InvalidateEntries() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.Entries = CachedItem[[]models.Entry]{}
 }
 
 func (c *ClockifyCache) GetEntries() []models.Entry {
@@ -77,6 +130,22 @@ func (c *ClockifyCache) SetProjects(projects []models.Project) {
 		Data:     projects,
 		CachedAt: time.Now(),
 	}
+}
+
+func (c *ClockifyCache) AddProject(project models.Project) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Append the new project into the cached projects
+	c.Projects.Data = append(c.Projects.Data, project)
+	c.Projects.CachedAt = time.Now()
+}
+
+func (c *ClockifyCache) InvalidateProjects() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.Projects = CachedItem[[]models.Project]{}
 }
 
 func (c *ClockifyCache) GetProjects() []models.Project {
@@ -118,4 +187,12 @@ func (c *ClockifyCache) GetProjectTasks(projectID string) []models.Task {
 	}
 
 	return nil
+}
+
+func (c *ClockifyCache) InvalidateProjectTasks(projectID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.ProjectTasks, projectID)
+	delete(c.ProjectTasks, projectID)
 }

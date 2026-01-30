@@ -5,7 +5,6 @@ import (
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
-	debug "clockify-app/internal/utils"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -64,14 +63,12 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 
 	// Set the list size when the window size changes
 	case tea.WindowSizeMsg:
-		debug.Log("Window size changed: %dx%d", msg.Width, msg.Height)
 		h, v := docStyle.GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v-5)
 
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "j", "down":
-			debug.Log("Down key pressed")
 			// Handle down navigation
 			if m.cursor < len(m.projects)-1 {
 				m.cursor++

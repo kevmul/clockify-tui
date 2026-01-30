@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	debug "clockify-app/internal/utils"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -60,7 +58,8 @@ func FetchEntries(apiKey, workspaceId, userId string) tea.Cmd {
 
 // CreateTimeEntry creates a new time entry in Clockify
 // Takes all the necessary parameters and returns an error if creation fails
-func (c *Client) CreateTimeEntry(workspaceID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) error {
+func (c *Client) CreateTimeEntry(workspaceID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) (models.Entry, error) {
+
 	// Parse the time range string (e.g., "9a - 5p") into actual times
 	startTime := parseTime(startTimeStr, date)
 	endTime := parseTime(endTimeStr, date)
@@ -74,20 +73,24 @@ func (c *Client) CreateTimeEntry(workspaceID, projectID, taskID, description, st
 		Description: description,
 	}
 
-	debug.Log("Creating time entry with payload: %v", entry)
-
 	// Build endpoint and make POST request
 	endpoint := fmt.Sprintf("/workspaces/%s/time-entries", workspaceID)
-	_, err := c.Post(endpoint, entry)
+	bytes, err := c.Post(endpoint, entry)
 
 	if err != nil {
-		return fmt.Errorf("failed to create time entry: %w", err)
+		return models.Entry{}, fmt.Errorf("failed to create time entry: %w", err)
 	}
 
-	return nil
+	// Parse response
+	var newEntry models.Entry
+	if err := json.Unmarshal(bytes, &newEntry); err != nil {
+		return models.Entry{}, fmt.Errorf("failed to parse created time entry: %w", err)
+	}
+
+	return newEntry, nil
 }
 
-func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) error {
+func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) (models.Entry, error) {
 	// Parse the time range string (e.g., "9a - 5p") into actual times
 	startTime := parseTime(startTimeStr, date)
 	endTime := parseTime(endTimeStr, date)
@@ -103,13 +106,18 @@ func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, taskID, descri
 
 	// Build endpoint and make PUT request
 	endpoint := fmt.Sprintf("/workspaces/%s/time-entries/%s", workspaceID, entryID)
-	_, err := c.Put(endpoint, entry)
+	bytes, err := c.Put(endpoint, entry)
 
 	if err != nil {
-		return fmt.Errorf("failed to update time entry: %w", err)
+		return models.Entry{}, fmt.Errorf("failed to update time entry: %w", err)
 	}
 
-	return nil
+	var updatedEntry models.Entry
+	if err := json.Unmarshal(bytes, &updatedEntry); err != nil {
+		return models.Entry{}, fmt.Errorf("failed to parse updated time entry: %w", err)
+	}
+
+	return updatedEntry, nil
 }
 
 func (c *Client) DeleteTimeEntry(workspaceID, entryID string) error {

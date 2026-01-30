@@ -2,6 +2,7 @@ package cache
 
 import (
 	"clockify-app/internal/models"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -19,6 +20,7 @@ func TestGetInstance(t *testing.T) {
 	}
 }
 
+// Test Entries Cache
 func TestEntriesCache(t *testing.T) {
 	cache := GetInstance()
 
@@ -44,8 +46,54 @@ func TestEntriesCache(t *testing.T) {
 	if retrieved[0].ID != "1" || retrieved[1].ID != "2" {
 		t.Error("Retrieved entries don't match expected values")
 	}
+
+	// Test prepending entry with new entry
+	testEntry := models.Entry{ID: "3", Description: "New entry"}
+
+	cache.AddEntry(testEntry)
+	retrieved = cache.GetEntries()
+
+	if len(retrieved) != 3 {
+		t.Errorf("Expected 3 entries after adding, got %d", len(retrieved))
+	}
+
+	if retrieved[0].ID != "3" {
+		t.Error("New entry was not prepended correctly")
+	}
+
+	// Test updating an existing entry
+	updatedEntry := models.Entry{ID: "2", Description: "Updated entry 2"}
+
+	cache.UpdateEntry(updatedEntry)
+	retrieved = cache.GetEntries()
+
+	if retrieved[2].Description != "Updated entry 2" {
+		t.Error("Entry was not updated correctly")
+	}
+
+	// Test deleting an entry
+	cache.DeleteEntry("1")
+	retrieved = cache.GetEntries()
+
+	if len(retrieved) != 2 {
+		t.Errorf("Expected 2 entries after deletion, got %d", len(retrieved))
+	}
+
+	for _, entry := range retrieved {
+		if entry.ID == "1" {
+			t.Error("Entry with ID '1' was not deleted")
+		}
+	}
+
+	// Test invalidating entries
+	cache.InvalidateEntries()
+	retrieved = cache.GetEntries()
+	if retrieved != nil {
+		t.Error("Expected nil after invalidating entries")
+	}
 }
 
+// Test Projects Cache
 func TestProjectsCache(t *testing.T) {
 	cache := GetInstance()
 
@@ -71,8 +119,29 @@ func TestProjectsCache(t *testing.T) {
 	if retrieved[0].ID != "p1" || retrieved[1].ID != "p2" {
 		t.Error("Retrieved projects don't match expected values")
 	}
+
+	// Test Adding a project
+	newProject := models.Project{ID: "p3", Name: "Project 3"}
+	cache.AddProject(newProject)
+	retrieved = cache.GetProjects()
+
+	if len(retrieved) != 3 {
+		t.Errorf("Expected 3 projects after adding, got %d", len(retrieved))
+	}
+
+	if retrieved[2].ID != "p3" {
+		t.Error("New project was not added correctly")
+	}
+
+	// Test invalidating entries
+	cache.InvalidateProjects()
+	retrieved = cache.GetProjects()
+	if retrieved != nil {
+		t.Error("Expected nil after invalidating entries")
+	}
 }
 
+// Test Project Tasks Cache
 func TestProjectTasksCache(t *testing.T) {
 	cache := GetInstance()
 	projectID := "test-project"
@@ -99,8 +168,16 @@ func TestProjectTasksCache(t *testing.T) {
 	if retrieved[0].ID != "t1" || retrieved[1].ID != "t2" {
 		t.Error("Retrieved tasks don't match expected values")
 	}
+
+	// Test invalidating entries
+	cache.InvalidateProjectTasks(projectID)
+	retrieved = cache.GetProjectTasks(projectID)
+	if retrieved != nil {
+		t.Error("Expected nil after invalidating entries")
+	}
 }
 
+// Test Cache Expiration
 func TestCacheExpiration(t *testing.T) {
 	// Temporarily reduce expiration time for testing
 	originalExpiration := minTilExpired
@@ -129,20 +206,21 @@ func TestCacheExpiration(t *testing.T) {
 	}
 }
 
+// Test Concurrent Access
 func TestConcurrentAccess(t *testing.T) {
 	cache := GetInstance()
 	done := make(chan bool, 2)
 
 	// Concurrent writes
 	go func() {
-		for i := 0; i < 100; i++ {
-			cache.SetEntries([]models.Entry{{ID: "concurrent1"}})
+		for i := range 100 {
+			cache.SetEntries([]models.Entry{{ID: "concurrent" + strconv.Itoa(i)}})
 		}
 		done <- true
 	}()
 
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			cache.GetEntries()
 		}
 		done <- true
