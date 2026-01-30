@@ -93,6 +93,46 @@ var Entry = EntryKeyMap{
 }
 
 // =======================================
+// Projects Key Bindings
+// =======================================
+
+type ProjectsKeyMap struct {
+	Enter key.Binding
+	Up    key.Binding
+	Down  key.Binding
+}
+
+var Projects = ProjectsKeyMap{
+	Enter: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("<enter>", "Open Project"),
+	),
+	Up: key.NewBinding(
+		key.WithKeys("up", "k"),
+		key.WithHelp("↑/k", "Move up"),
+	),
+	Down: key.NewBinding(
+		key.WithKeys("down", "j"),
+		key.WithHelp("↓/j", "Move down"),
+	),
+}
+
+// =======================================
+// Project Single Key Bindings
+// =======================================
+
+type ProjectKeyMap struct {
+	Back key.Binding
+}
+
+var Project = ProjectKeyMap{
+	Back: key.NewBinding(
+		key.WithKeys("b", "esc"),
+		key.WithHelp("b/<esc>", "Back to Projects"),
+	),
+}
+
+// =======================================
 // Settings Key Bindings
 // =======================================
 

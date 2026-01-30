@@ -8,12 +8,14 @@ import (
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
 	"clockify-app/internal/utils"
+	debug "clockify-app/internal/utils"
 	"strconv"
 	"strings"
 
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/ui/components/modal"
 	"clockify-app/internal/ui/views/entries"
+	"clockify-app/internal/ui/views/project"
 	"clockify-app/internal/ui/views/projects"
 	"clockify-app/internal/ui/views/settings"
 
@@ -28,6 +30,7 @@ const (
 	SettingsView View = iota
 	EntriesView
 	ProjectsView
+	ProjectView
 )
 
 type Page struct {
@@ -52,9 +55,10 @@ type Model struct {
 	currentView View
 
 	// View models
-	settingsView settings.Model
-	entriesView  entries.Model
-	projectsView projects.Model
+	settingsView settings.Model // Settings View
+	entriesView  entries.Model  // List of Entries
+	projectsView projects.Model // List of Projects
+	projectView  project.Model  // Single Project view
 
 	// Modal state
 	modal     *modal.Model
@@ -181,30 +185,44 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 			case "n":
-				m.showModal = true
-				m.modal = modal.NewEntryForm(m.config, m.projects)
-				return m, nil
+				switch m.currentView {
+				case EntriesView:
+					m.showModal = true
+					m.modal = modal.NewEntryForm(m.config, m.projects)
+					return m, nil
+				}
 			case "?":
 				m.showModal = true
-				if m.currentView == EntriesView {
+				switch m.currentView {
+				case EntriesView:
 					m.modal = modal.NewHelp(
 						help.GenerateSection("Entries Keys", help.Entry),
 						help.GenerateSection("Global Keys", help.Global),
 					)
 					return m, nil
-				}
-				if m.currentView == SettingsView {
+				case ProjectsView:
+					m.modal = modal.NewHelp(
+						help.GenerateSection("Projects Keys", help.Projects),
+						help.GenerateSection("Global Keys", help.Global),
+					)
+					return m, nil
+				case ProjectView:
+					m.modal = modal.NewHelp(
+						help.GenerateSection("Project Keys", help.Project),
+						help.GenerateSection("Global Keys", help.Global),
+					)
+					return m, nil
+				case SettingsView:
 					m.modal = modal.NewHelp(
 						help.GenerateSection("Settings Keys", help.Settings),
 						help.GenerateSection("Global Keys", help.Global),
 					)
 					return m, nil
+				default:
+					m.modal = modal.NewHelp(
+						help.GenerateSection("Global Keys", help.Global),
+					)
 				}
-				// Default help
-				m.modal = modal.NewHelp(
-					help.GenerateSection("Global Keys", help.Global),
-				)
-				return m, nil
 			}
 		}
 
@@ -233,6 +251,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.viewport.SetContent(m.renderContent())
 		return m, cmd
+
+	case messages.ProjectSelectedMsg:
+		// Let projects view handle the selected project
+		m.projectView = project.New(m.config, msg.Project, []models.Task{})
+		cmd = m.projectView.Init()
+		m.currentView = ProjectView
+		// m.projectView, cmd = m.projectView.Update(msg)
+		m.viewport.SetContent(m.renderContent())
+		return m, cmd
+
+	case messages.TasksLoadedMsg:
+		// Let project view handle the loaded tasks
+		debug.Log("Tasks loaded message received in app.go")
+		if m.currentView == ProjectView {
+			m.projectView, cmd = m.projectView.Update(msg)
+			m.viewport.SetContent(m.renderContent())
+			return m, cmd
+		}
+
+	case messages.ExitViewMsg:
+		// Go back to Projects View
+		if m.currentView == ProjectView {
+			m.currentView = ProjectsView
+			m.viewport.SetContent(m.renderContent())
+		}
+		return m, nil
 
 	case messages.EntrySavedMsg:
 		m.showModal = false
@@ -304,6 +348,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.projectsView, cmd = m.projectsView.Update(msg)
 	case EntriesView:
 		m.entriesView, cmd = m.entriesView.Update(msg)
+	case ProjectView:
+		m.projectView, cmd = m.projectView.Update(msg)
 	}
 	cmds = append(cmds, cmd)
 
@@ -406,6 +452,8 @@ func (m Model) renderContent() string {
 		return m.projectsView.View()
 	case EntriesView:
 		return m.entriesView.View()
+	case ProjectView:
+		return m.projectView.View()
 	}
 
 	return ""
