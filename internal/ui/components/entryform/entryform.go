@@ -179,6 +179,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				break
 			}
 
+			if m.step == stepTimeInput {
+				// Reset time input errors when going back
+				timeStartErr = "" // Located in time input step file
+				timeEndErr = ""
+			}
+
 			if m.step > stepDateSelect {
 				m.step--
 			}
@@ -186,6 +192,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case messages.TasksLoadedMsg:
 		m.tasks = msg.Tasks
+		m.tasks = append(m.tasks, models.Task{ID: "", Name: "No Task"}) // Option for no task
 		m.tasksReady = true
 		return m, nil
 	}

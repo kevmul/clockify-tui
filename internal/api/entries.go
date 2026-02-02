@@ -4,9 +4,9 @@ import (
 	"clockify-app/internal/cache"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	"clockify-app/internal/utils"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -61,8 +61,8 @@ func FetchEntries(apiKey, workspaceId, userId string) tea.Cmd {
 func (c *Client) CreateTimeEntry(workspaceID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) (models.Entry, error) {
 
 	// Parse the time range string (e.g., "9a - 5p") into actual times
-	startTime := parseTime(startTimeStr, date)
-	endTime := parseTime(endTimeStr, date)
+	startTime, _ := utils.ParseTime(startTimeStr, date)
+	endTime, _ := utils.ParseTime(endTimeStr, date)
 
 	// Build the request payload
 	entry := models.TimeEntryRequest{
@@ -92,8 +92,8 @@ func (c *Client) CreateTimeEntry(workspaceID, projectID, taskID, description, st
 
 func (c *Client) UpdateTimeEntry(workspaceID, entryID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) (models.Entry, error) {
 	// Parse the time range string (e.g., "9a - 5p") into actual times
-	startTime := parseTime(startTimeStr, date)
-	endTime := parseTime(endTimeStr, date)
+	startTime, _ := utils.ParseTime(startTimeStr, date)
+	endTime, _ := utils.ParseTime(endTimeStr, date)
 
 	// Build the request payload
 	entry := models.TimeEntryRequest{
@@ -130,38 +130,4 @@ func (c *Client) DeleteTimeEntry(workspaceID, entryID string) error {
 	}
 
 	return nil
-}
-
-// parseTime converts a time string like "9a" or "3:30p" to a full time.Time
-// It handles various formats: 9a, 9:30a, 9, 9:30
-func parseTime(timeStr string, date time.Time) time.Time {
-	// Normalize the string: lowercase, remove spaces
-	timeStr = strings.ToLower(strings.TrimSpace(timeStr))
-	timeStr = strings.ReplaceAll(timeStr, " ", "")
-
-	var hour, minute int
-
-	// Check if PM (afternoon/evening)
-	isPM := strings.HasSuffix(timeStr, "p") || strings.HasSuffix(timeStr, "pm")
-
-	// Remove the am/pm suffix
-	timeStr = strings.TrimSuffix(strings.TrimSuffix(timeStr, "p"), "m")
-	timeStr = strings.TrimSuffix(strings.TrimSuffix(timeStr, "a"), "m")
-
-	// Parse hour and optional minutes
-	if strings.Contains(timeStr, ":") {
-		fmt.Sscanf(timeStr, "%d:%d", &hour, &minute)
-	} else {
-		fmt.Sscanf(timeStr, "%d", &hour)
-	}
-
-	// Convert to 24-hour format
-	if isPM && hour != 12 {
-		hour += 12 // 1pm = 13, 2pm = 14, etc.
-	} else if !isPM && hour == 12 {
-		hour = 0 // 12am = midnight = 0
-	}
-
-	// Combine the date with our parsed time
-	return time.Date(date.Year(), date.Month(), date.Day(), hour, minute, 0, 0, date.Location())
 }
