@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 var debugFile *os.File
@@ -11,7 +12,8 @@ var logger *log.Logger
 
 func init() {
 	var err error
-	debugFile, err = os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	filePath := filepath.Join(".", "debug.log")
+	debugFile, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		panic(err)
 	}
