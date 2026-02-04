@@ -195,7 +195,7 @@ func RenderScrollbar(viewport viewport.Model, offset int, topchar, bottomchar st
 			char = "│" // Normal border
 		}
 
-		scrollbar.WriteString(lipgloss.NewStyle().Foreground(styles.Primary).Render(char))
+		scrollbar.WriteString(lipgloss.NewStyle().Foreground(styles.Secondary).Render(char))
 		if i < viewportHeight-1 {
 			scrollbar.WriteString("\n")
 		}

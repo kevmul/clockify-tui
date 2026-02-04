@@ -36,7 +36,7 @@ func (m *Model) setSize(width, height int) {
 
 func (m Model) View() string {
 
-	content := "Key Bindings \n\n"
+	content := ""
 
 	bindingStyle := lipgloss.NewStyle()
 

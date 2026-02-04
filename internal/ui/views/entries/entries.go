@@ -5,6 +5,7 @@ import (
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	"clockify-app/internal/styles"
 	"clockify-app/internal/utils"
 	"fmt"
 	"time"
@@ -23,7 +24,11 @@ type Model struct {
 }
 
 func New(cfg *config.Config) Model {
-	list := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	d := list.NewDefaultDelegate()
+	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(styles.Primary).BorderLeftForeground(styles.Primary)
+	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(styles.Tertiary).BorderLeftForeground(styles.Primary)
+
+	list := list.New([]list.Item{}, d, 0, 0)
 	list.Title = "Clockify Entries"
 	list.SetShowTitle(false)
 	list.SetShowStatusBar(true)

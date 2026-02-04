@@ -3,9 +3,10 @@ package styles
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	// Colors
-	Primary      = lipgloss.Color("#7C3AED")
-	Secondary    = lipgloss.Color("#EC4899")
+	// Color
+	Primary      = lipgloss.Color("#9ECE6A")
+	Secondary    = lipgloss.Color("#BB9AF7")
+	Tertiary     = lipgloss.Color("#7AA2F7")
 	Success      = lipgloss.Color("#10B981")
 	Error        = lipgloss.Color("#EF4444")
 	Warning      = lipgloss.Color("#F59E0B")
@@ -60,7 +61,7 @@ var (
 	// Box styles
 	BoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(Primary).
+			BorderForeground(Secondary).
 			Padding(1, 2)
 
 	ModalStyle = lipgloss.NewStyle().
@@ -69,7 +70,7 @@ var (
 			BorderRight(true).
 			BorderTop(false).
 			BorderBottom(true).
-			BorderForeground(Primary).
+			BorderForeground(Secondary).
 			Padding(0, 1).
 			Width(ModalWidth)
 
@@ -79,12 +80,12 @@ var (
 				BorderRight(false).
 				BorderTop(false).
 				BorderBottom(true).
-				BorderForeground(Primary).
+				BorderForeground(Secondary).
 				PaddingLeft(1).
 				Width(ModalWidth)
 
 	ModalTitleStyle = lipgloss.NewStyle().
-			Foreground(Primary)
+			Foreground(Secondary)
 
 	// Input styles
 	FocusedInputStyle = lipgloss.NewStyle().
@@ -112,7 +113,7 @@ var (
 
 	// List styles
 	SelectedItemStyle = lipgloss.NewStyle().
-				Foreground(Primary).
+				Foreground(Secondary).
 				Bold(true)
 
 	NormalItemStyle = lipgloss.NewStyle().
@@ -124,7 +125,7 @@ var (
 			MarginTop(1)
 
 	KeyStyle = lipgloss.NewStyle().
-			Foreground(Primary).
+			Foreground(Secondary).
 			Bold(true)
 
 	// Tabs.
