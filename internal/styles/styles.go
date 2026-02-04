@@ -67,7 +67,7 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderLeft(true).
 			BorderRight(true).
-			BorderTop(true).
+			BorderTop(false).
 			BorderBottom(true).
 			BorderForeground(Primary).
 			Padding(0, 1).
@@ -77,11 +77,14 @@ var (
 				BorderStyle(CustomBorder).
 				BorderLeft(true).
 				BorderRight(false).
-				BorderTop(true).
+				BorderTop(false).
 				BorderBottom(true).
 				BorderForeground(Primary).
 				PaddingLeft(1).
 				Width(ModalWidth)
+
+	ModalTitleStyle = lipgloss.NewStyle().
+			Foreground(Primary)
 
 	// Input styles
 	FocusedInputStyle = lipgloss.NewStyle().

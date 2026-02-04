@@ -2,7 +2,6 @@ package entryform
 
 import (
 	"bytes"
-	"clockify-app/internal/api"
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
