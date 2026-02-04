@@ -1,6 +1,8 @@
 package entryform
 
 import (
+	"bytes"
+	"clockify-app/internal/api"
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
@@ -27,6 +29,7 @@ type Model struct {
 	apiKey      string
 	workspaceID string
 	step        int
+	StepLines   int // Number of lines in the current step's view (for viewport sizing)
 
 	// Data from API
 	projects   []models.Project // List of available projects
@@ -194,24 +197,31 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.tasks = msg.Tasks
 		m.tasks = append(m.tasks, models.Task{ID: "", Name: "No Task"}) // Option for no task
 		m.tasksReady = true
+		m.StepLines = getLines(m.viewTimeInput())
 		return m, nil
 	}
 
 	switch m.step {
 	case stepDateSelect:
 		m, cmd = m.updateDateSelect(msg)
+		m.StepLines = getLines(m.viewDateSelect())
 	case stepDescriptionInput:
 		m, cmd = m.updateDescriptionInput(msg)
+		m.StepLines = getLines(m.viewDescriptionInput())
 	case stepProjectSelect:
 		m, cmd = m.updateProjectSelect(msg)
+		m.StepLines = getLines(m.viewProjectSelect())
 	case stepTimeInput:
 		m, cmd = m.updateTimeInput(msg)
+		m.StepLines = getLines(m.viewTimeInput())
 	case stepTaskInput:
 		m, cmd = m.updateTaskInput(msg)
 	case stepConfirm:
 		m, cmd = m.updateConfirm(msg)
+		m.StepLines = getLines(m.viewConfirm())
 	case stepComplete:
 		m, cmd = m.updateComplete(msg)
+		m.StepLines = getLines(m.viewCompletionInput())
 	}
 
 	cmds = append(cmds, cmd)
@@ -241,4 +251,8 @@ func (m Model) View() string {
 	}
 
 	return s
+}
+
+func getLines(s string) int {
+	return bytes.Count([]byte(s), []byte{'\n'})
 }

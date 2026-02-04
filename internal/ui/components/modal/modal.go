@@ -38,6 +38,11 @@ func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 	form := entryform.New(cfg, projects)
 	viewport := viewport.New(0, styles.ModalHeight)
 	viewport.SetContent(form.View())
+	if viewport.Height > viewport.TotalLineCount() {
+		viewport.Height = viewport.TotalLineCount()
+		viewport.SetContent(form.View())
+	}
+
 	return &Model{
 		modalType: EntryModal,
 		entryForm: &form,
@@ -115,6 +120,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch m.modalType {
 	case EntryModal:
 		*m.entryForm, cmd = m.entryForm.Update(msg)
+		// resize viewportHeight
+		if m.entryForm.StepLines <= styles.ModalHeight {
+			m.viewport.Height = m.entryForm.StepLines + 1
+		} else {
+			m.viewport.Height = styles.ModalHeight
+		}
 	case DeleteConfirmation:
 		*m.deleteConfirmation, cmd = m.deleteConfirmation.Update(msg)
 	case HelpModal:
