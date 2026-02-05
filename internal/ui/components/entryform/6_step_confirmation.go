@@ -44,24 +44,10 @@ func (m Model) viewConfirm() string {
 	)
 }
 
-func (m Model) updateConfirm(msg tea.Msg) (Model, tea.Cmd) {
-	// Implementation of confirmation update goes here
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
-			// Submit the time entry and transition to submission state
-			m.submitting = true
-			m.step++
-			if m.editing {
-				// Updating an existing entry
-				return m, m.updateTimeEntry()
-			}
-			return m, m.submitTimeEntry()
-		}
-	}
-	return m, nil
-}
+// func (m Model) updateConfirm(msg tea.Msg) (Model, tea.Cmd) {
+// 	// Implementation of confirmation update goes here
+// 	return m, nil
+// }
 
 // submitTimeEntry creates a command to submit the time entry
 func (m Model) submitTimeEntry() tea.Cmd {

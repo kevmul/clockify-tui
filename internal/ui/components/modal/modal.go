@@ -113,9 +113,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		// We might move this to the modal themselves later...
 		if msg.String() == "esc" || msg.String() == "q" || msg.String() == "ctrl+c" {
-			return m, func() tea.Msg {
-				return messages.ModalClosedMsg{}
+			// Handle closing in the modal itself if needed (e.g. to reset form state), then send message to parent to close the modal
+			var cmd tea.Cmd
+			switch m.modalType {
+			case EntryModal:
+				*m.entryForm, cmd = m.entryForm.Update(msg)
 			}
+			// Send a message to parent to close the modal
+			return m, tea.Batch(cmd, func() tea.Msg {
+				return messages.ModalClosedMsg{}
+			})
 		}
 	case messages.TasksLoadedMsg:
 		// Pass to entry form if needed

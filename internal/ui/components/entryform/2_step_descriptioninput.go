@@ -21,15 +21,6 @@ func (m Model) viewDescriptionInput() string {
 
 func (m Model) updateDescriptionInput(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
-			// Move to next step or finish
-			m.description.Blur()
-			m.step = stepProjectSelect
-		}
-	}
 	m.description, cmd = m.description.Update(msg)
 
 	return m, cmd

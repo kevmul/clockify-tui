@@ -1,10 +1,18 @@
 package entryform
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"clockify-app/internal/styles"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
 
 func (m Model) viewCompletionInput() string {
-	// Implementation of description input view goes here
-	return "Completion Step (to be implemented)"
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		styles.SuccessStyle.Render("Time entry created successfully!"),
+		styles.SubtitleStyle.Render("Press [enter] to close."),
+	)
 }
 
 func (m Model) updateComplete(msg tea.Msg) (Model, tea.Cmd) {

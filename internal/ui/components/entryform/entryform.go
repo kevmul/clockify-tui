@@ -2,6 +2,7 @@ package entryform
 
 import (
 	"bytes"
+	"clockify-app/internal/api"
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
@@ -158,6 +159,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		// Global key handling can go here if needed
 		switch msg.String() {
+		case "esc":
+			// Handle escape to exit the form
+			// Reset form state if needed
+			m = New(&config.Config{APIKey: m.apiKey, WorkspaceId: m.workspaceID}, m.projects)
+			timeStartErr = "" // Located in time input step file
+			timeEndErr = ""
 		case "tab":
 			// Handle tab to go to next step
 			if m.projectSearch.Focused() {
@@ -165,9 +172,27 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				break
 			}
 
-			if m.step == stepTimeInput {
+			switch m.step {
+			case stepTaskInput:
+				m.timeStart.Focus()
+			case stepTimeInput:
 				// If we're in time input step, ensure end time is focused next
-				break
+				if m.timeStart.Focused() {
+					m.timeStart.Blur()
+					m.timeEnd.Focus()
+				} else {
+					m.timeEnd.Blur()
+					m.timeStart.Focus()
+				}
+				_, cmd = m.updateTimeInput(msg)
+				return m, nil
+				// }
+			case stepProjectSelect:
+				// If no project selected, don't move forward
+				if m.selectedProj.ID == "" {
+					return m, nil
+				}
+
 			}
 
 			if m.step < stepConfirm {
@@ -181,15 +206,97 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				break
 			}
 
-			if m.step == stepTimeInput {
+			switch m.step {
+			case stepProjectSelect:
 				// Reset time input errors when going back
 				timeStartErr = "" // Located in time input step file
 				timeEndErr = ""
+				m.description.Focus()
+			case stepTimeInput:
+				// Blur both inputs
+				m.timeStart.Blur()
+				m.timeEnd.Blur()
 			}
 
 			if m.step > stepDateSelect {
 				m.step--
 			}
+		case "enter":
+			switch m.step {
+
+			case stepDateSelect:
+				m.step = stepDescriptionInput
+				m.description.Focus()
+
+			case stepDescriptionInput:
+				m.description.Blur()
+				m.step = stepProjectSelect
+
+			case stepProjectSelect:
+				// Select the current project
+				if m.projectSearch.Focused() {
+					// If search is focused, do nothing on enter
+					if m.projectSearch.Focused() {
+						m.projectSearch.Blur()
+						m.cursor = 0 // Reset cursor when focusing search
+						return m, nil
+					}
+					return m, nil
+				}
+				filtered := m.filterProjects()
+				if len(filtered) > 0 && m.cursor < len(filtered) {
+					m.selectedProj = filtered[m.cursor]
+					m.task.Focus()
+					m.cursor = 0
+					m.tasks = nil
+					m.tasksReady = false
+					m.step = stepTaskInput
+					m.cursor = 0
+				}
+				return m, api.FetchTasks(m.apiKey, m.workspaceID, m.selectedProj.ID)
+
+			case stepTaskInput:
+				if len(m.tasks) > 0 {
+					m.selectedTask = m.tasks[m.cursor]
+				}
+				m.task.Blur()
+				m.step = stepTimeInput
+				m.timeStart.Focus()
+
+			case stepTimeInput:
+
+				// Move to next step
+				timeStartErr = ""
+				timeEndErr = ""
+				m.validate()
+				if timeStartErr != "" || timeEndErr != "" {
+					// Show errors
+					return m, nil
+				}
+
+				// Move to next step
+				m.timeEnd.Blur()
+				m.timeStart.Blur()
+				m.step = stepConfirm
+
+			case stepConfirm:
+				// Submit the time entry and transition to submission state
+				m.submitting = true
+				m.step++
+				if m.editing {
+					// Updating an existing entry
+					cmds = append(cmds, m.updateTimeEntry())
+				} else {
+					cmds = append(cmds, m.submitTimeEntry())
+				}
+
+			case stepComplete:
+				cmds = append(cmds, func() tea.Msg {
+					// Reset form after completion
+					return messages.ModalClosedMsg{}
+				})
+			}
+
 		}
 
 	case messages.TasksLoadedMsg:
@@ -216,7 +323,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case stepTaskInput:
 		m, cmd = m.updateTaskInput(msg)
 	case stepConfirm:
-		m, cmd = m.updateConfirm(msg)
+		// m, cmd = m.updateConfirm(msg)
 		m.StepLines = getLines(m.viewConfirm())
 	case stepComplete:
 		m, cmd = m.updateComplete(msg)

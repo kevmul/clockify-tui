@@ -96,14 +96,6 @@ func (m Model) updateTaskInput(msg tea.Msg) (Model, tea.Cmd) {
 			if m.cursor < len(m.tasks)-1 {
 				m.cursor++
 			}
-		case "enter":
-			// Move to next step or finish
-			if len(m.tasks) > 0 {
-				m.selectedTask = m.tasks[m.cursor]
-			}
-			m.task.Blur()
-			m.timeStart.Focus()
-			m.step = stepTimeInput
 		}
 	}
 	m.task, cmd = m.task.Update(msg)

@@ -277,7 +277,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case messages.EntrySavedMsg:
-		m.showModal = false
+		// m.showModal = false
 		cache := cache.GetInstance()
 		cache.AddEntry(msg.Entry)
 		m.entriesView, cmd = m.entriesView.Update(msg)

@@ -1,7 +1,6 @@
 package entryform
 
 import (
-	"clockify-app/internal/api"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
 	"fmt"
@@ -115,29 +114,6 @@ func (m Model) updateProjectSelect(msg tea.Msg) (Model, tea.Cmd) {
 			}
 
 			return m, m.projectSearch.Focus()
-
-		case "enter":
-			// Select the current project
-			if m.projectSearch.Focused() {
-				// If search is focused, do nothing on enter
-				if m.projectSearch.Focused() {
-					m.projectSearch.Blur()
-					m.cursor = 0 // Reset cursor when focusing search
-					return m, nil
-				}
-				return m, nil
-			}
-			filtered := m.filterProjects()
-			if len(filtered) > 0 && m.cursor < len(filtered) {
-				m.selectedProj = filtered[m.cursor]
-				m.task.Focus()
-				m.cursor = 0
-				m.tasks = nil
-				m.tasksReady = false
-				m.step = stepTaskInput
-				m.cursor = 0
-			}
-			return m, api.FetchTasks(m.apiKey, m.workspaceID, m.selectedProj.ID)
 		}
 	}
 
