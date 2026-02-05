@@ -11,6 +11,7 @@ var (
 	Error        = lipgloss.Color("#EF4444")
 	Warning      = lipgloss.Color("#F59E0B")
 	Muted        = lipgloss.Color("#6B7280")
+	Text         = lipgloss.Color("#D4D4D4")
 	Background   = lipgloss.Color("#1E1E1E")
 	CustomBorder = lipgloss.Border{
 		Top:         "─",

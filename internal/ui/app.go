@@ -17,6 +17,7 @@ import (
 	"clockify-app/internal/ui/views/project"
 	"clockify-app/internal/ui/views/projects"
 	"clockify-app/internal/ui/views/settings"
+	"clockify-app/internal/ui/views/week"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,6 +29,7 @@ type View int
 const (
 	SettingsView View = iota
 	EntriesView
+	WeekView
 	ProjectsView
 	ProjectView
 )
@@ -39,6 +41,7 @@ type Page struct {
 
 var pages = []Page{
 	{"Entries", EntriesView},
+	{"WeekView", WeekView},
 	{"Projects", ProjectsView},
 	{"Settings", SettingsView},
 }
@@ -58,6 +61,7 @@ type Model struct {
 	entriesView  entries.Model  // List of Entries
 	projectsView projects.Model // List of Projects
 	projectView  project.Model  // Single Project view
+	weekView     week.Model     // Week view
 
 	// Modal state
 	modal     *modal.Model
@@ -88,6 +92,7 @@ func NewModel() Model {
 		settingsView: settings.New(cfg),
 		entriesView:  entries.New(cfg),
 		projectsView: projects.New(cfg),
+		weekView:     week.New(cfg),
 		ready:        false,
 	}
 }
@@ -113,6 +118,15 @@ func (m Model) initializeFirstViewCmd() tea.Cmd {
 		)
 	case ProjectsView:
 		return m.projectsView.Init()
+
+	case WeekView:
+		return tea.Sequence(
+			api.FetchProjects(
+				m.config.APIKey,
+				m.config.WorkspaceId,
+			),
+			m.weekView.Init(),
+		)
 	}
 	return nil
 }
@@ -142,19 +156,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.height = msg.Height
 		}
 
-		m.projectsView, cmd = m.projectsView.Update(msg)
+		switch m.currentView {
+		case ProjectsView:
+			m.projectsView, cmd = m.projectsView.Update(msg)
+		case EntriesView:
+			m.entriesView, cmd = m.entriesView.Update(msg)
+		case ProjectView:
+			m.projectView, cmd = m.projectView.Update(msg)
+		case WeekView:
+			m.weekView, cmd = m.weekView.Update(msg)
+		case SettingsView:
+			m.settingsView, cmd = m.settingsView.Update(msg)
+		}
 		cmds = append(cmds, cmd)
 
-		m.entriesView, cmd = m.entriesView.Update(msg)
-		cmds = append(cmds, cmd)
-
-		m.projectsView, cmd = m.projectsView.Update(msg)
-		cmds = append(cmds, cmd)
-
-		m.settingsView, cmd = m.settingsView.Update(msg)
-		cmds = append(cmds, cmd)
-
-		return m, nil
+		return m, tea.Batch(cmds...)
 
 	case tea.KeyMsg:
 		// Global keybindings
@@ -162,7 +178,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "ctrl+c", "q":
 				return m, tea.Quit
-			case "1", "2", "3":
+			case "1", "2", "3", "4":
 				if num, err := strconv.Atoi(msg.String()); err == nil {
 					m.currentView = pages[num-1].Key
 					m.viewport.SetContent(m.renderContent())
@@ -178,6 +194,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						)
 					case ProjectsView:
 						return m, m.projectsView.Init()
+					case WeekView:
+						m.weekView = m.weekView.SetSize(m.width, m.height)
+						return m, tea.Sequence(
+							api.FetchProjects(
+								m.config.APIKey,
+								m.config.WorkspaceId,
+							),
+							m.weekView.Init(),
+						)
 					case SettingsView:
 						return m, settings.Init()
 					}
@@ -247,6 +272,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.entriesView, cmd = m.entriesView.Update(msg)
 		case ProjectsView:
 			m.projectsView, cmd = m.projectsView.Update(msg)
+		case WeekView:
+			m.weekView, cmd = m.weekView.Update(msg)
 		}
 		m.viewport.SetContent(m.renderContent())
 		return m, cmd
@@ -299,7 +326,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		)
 
 	case messages.EntriesLoadedMsg:
-		m.entriesView, cmd = m.entriesView.Update(msg)
+		switch m.currentView {
+		case EntriesView:
+			m.entriesView, cmd = m.entriesView.Update(msg)
+		case WeekView:
+			m.weekView, cmd = m.weekView.Update(msg)
+		}
 		m.viewport.SetContent(m.renderContent())
 		return m, cmd
 
@@ -348,6 +380,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.entriesView, cmd = m.entriesView.Update(msg)
 	case ProjectView:
 		m.projectView, cmd = m.projectView.Update(msg)
+	case WeekView:
+		m.weekView, cmd = m.weekView.Update(msg)
 	}
 	cmds = append(cmds, cmd)
 
@@ -377,7 +411,7 @@ func (m Model) View() string {
 	scrollbar := utils.RenderScrollbarSimple(m.viewport)
 
 	switch m.currentView {
-	case EntriesView, ProjectsView:
+	case EntriesView, ProjectsView, WeekView:
 		scrollbar = ""
 	}
 	// The viewport already contains the view content in Update
@@ -452,6 +486,8 @@ func (m Model) renderContent() string {
 		return m.entriesView.View()
 	case ProjectView:
 		return m.projectView.View()
+	case WeekView:
+		return m.weekView.View()
 	}
 
 	return ""
