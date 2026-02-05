@@ -73,6 +73,10 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter": // Open selected project
+			if m.list.FilterState() == list.Filtering {
+				// Do nothing if filtering
+				break
+			}
 			if len(m.projects) > 0 {
 				selectedProject := m.projects[m.list.Index()]
 				return m, func() tea.Msg {
