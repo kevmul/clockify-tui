@@ -45,35 +45,6 @@ func (m Model) viewTimeInput() string {
 }
 
 func (m Model) updateTimeInput(msg tea.Msg) (Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "tab":
-			// Switch focus between start and end time inputs
-			if m.timeStart.Focused() {
-				m.timeStart.Blur()
-				m.timeEnd.Focus()
-			} else {
-				m.timeEnd.Blur()
-				m.timeStart.Focus()
-			}
-		case "enter":
-			// Move to next step
-			timeStartErr = ""
-			timeEndErr = ""
-			m.validate()
-			if timeStartErr != "" || timeEndErr != "" {
-				// Show errors
-				return m, nil
-			}
-
-			// Move to next step
-			m.timeEnd.Blur()
-			m.timeStart.Blur()
-			m.task.Focus()
-			m.step = stepConfirm
-		}
-	}
 
 	// Update the text inputs
 	var cmd tea.Cmd

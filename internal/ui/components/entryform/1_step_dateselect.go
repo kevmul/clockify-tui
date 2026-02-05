@@ -43,11 +43,6 @@ func (m Model) updateDateSelect(msg tea.Msg) (Model, tea.Cmd) {
 			if m.step == stepDateSelect {
 				m.date = m.date.AddDate(0, 0, 1)
 			}
-
-		case "enter":
-			// Move to next step
-			m.description.Focus()
-			m.step = stepDescriptionInput
 		}
 	}
 	return m, nil
