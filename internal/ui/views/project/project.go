@@ -6,7 +6,6 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
-	debug "clockify-app/internal/utils"
 	"fmt"
 	"strings"
 
@@ -52,7 +51,6 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 		}
 
 	case messages.TasksLoadedMsg:
-		debug.Log("Tasks loaded for project: %s, Count: %d", m.project.Name, len(msg.Tasks))
 		m.tasks = msg.Tasks
 		m.ready = true
 	}

@@ -5,6 +5,7 @@ import (
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	"clockify-app/internal/styles"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -32,7 +33,11 @@ func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
 
 func New(cfg *config.Config) Model {
-	list := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	d := list.NewDefaultDelegate()
+	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(styles.Primary).BorderLeftForeground(styles.Primary)
+	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(styles.Tertiary).BorderLeftForeground(styles.Primary)
+
+	list := list.New([]list.Item{}, d, 0, 0)
 
 	list.SetShowTitle(false)
 	list.SetShowStatusBar(true)
@@ -68,6 +73,10 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter": // Open selected project
+			if m.list.FilterState() == list.Filtering {
+				// Do nothing if filtering
+				break
+			}
 			if len(m.projects) > 0 {
 				selectedProject := m.projects[m.list.Index()]
 				return m, func() tea.Msg {

@@ -8,7 +8,6 @@ import (
 	"clockify-app/internal/models"
 	"clockify-app/internal/styles"
 	"clockify-app/internal/utils"
-	debug "clockify-app/internal/utils"
 	"strconv"
 	"strings"
 
@@ -263,7 +262,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case messages.TasksLoadedMsg:
 		// Let project view handle the loaded tasks
-		debug.Log("Tasks loaded message received in app.go")
 		if m.currentView == ProjectView {
 			m.projectView, cmd = m.projectView.Update(msg)
 			m.viewport.SetContent(m.renderContent())
