@@ -158,15 +158,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.currentView {
 		case ProjectsView:
-			m.projectsView, cmd = m.projectsView.Update(msg)
+			m.projectsView.SetSize(m.width, m.height)
 		case EntriesView:
-			m.entriesView, cmd = m.entriesView.Update(msg)
+			m.entriesView.SetSize(m.width, m.height)
 		case ProjectView:
 			m.projectView, cmd = m.projectView.Update(msg)
 		case WeekView:
-			m.weekView, cmd = m.weekView.Update(msg)
+			m.weekView.SetSize(m.width, m.height)
 		case SettingsView:
-			m.settingsView, cmd = m.settingsView.Update(msg)
+			m.settingsView.SetSize(m.width, m.height)
 		}
 		cmds = append(cmds, cmd)
 
@@ -174,79 +174,82 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		// Global keybindings
-		if !m.showModal {
-			switch msg.String() {
-			case "ctrl+c", "q":
-				return m, tea.Quit
-			case "1", "2", "3", "4":
-				if num, err := strconv.Atoi(msg.String()); err == nil {
-					m.currentView = pages[num-1].Key
-					m.viewport.SetContent(m.renderContent())
-					// Initialize view if needed
-					switch m.currentView {
-					case EntriesView:
-						return m, tea.Sequence(
-							api.FetchProjects(
-								m.config.APIKey,
-								m.config.WorkspaceId,
-							),
-							m.entriesView.Init(),
-						)
-					case ProjectsView:
-						return m, m.projectsView.Init()
-					case WeekView:
-						m.weekView = m.weekView.SetSize(m.width, m.height)
-						return m, tea.Sequence(
-							api.FetchProjects(
-								m.config.APIKey,
-								m.config.WorkspaceId,
-							),
-							m.weekView.Init(),
-						)
-					case SettingsView:
-						return m, settings.Init()
-					}
-					return m, nil
-				}
-			case "n":
+		if m.showModal {
+			// Let modal handle key events
+			break
+		}
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		case "1", "2", "3", "4":
+			if num, err := strconv.Atoi(msg.String()); err == nil {
+				m.currentView = pages[num-1].Key
+				m.viewport.SetContent(m.renderContent())
+				// Initialize view if needed
 				switch m.currentView {
 				case EntriesView:
-					m.showModal = true
-					m.modal = modal.NewEntryForm(m.config, m.projects)
-					return m, nil
-				}
-			case "?":
-				m.showModal = true
-				switch m.currentView {
-				case EntriesView:
-					m.modal = modal.NewHelp(
-						help.GenerateSection("Entries Keys", help.Entry),
-						help.GenerateSection("Global Keys", help.Global),
+					return m, tea.Sequence(
+						api.FetchProjects(
+							m.config.APIKey,
+							m.config.WorkspaceId,
+						),
+						m.entriesView.Init(),
 					)
-					return m, nil
 				case ProjectsView:
-					m.modal = modal.NewHelp(
-						help.GenerateSection("Projects Keys", help.Projects),
-						help.GenerateSection("Global Keys", help.Global),
+					m.projectsView.SetSize(m.width, m.height)
+					return m, m.projectsView.Init()
+				case WeekView:
+					m.weekView.SetSize(m.width, m.height)
+					return m, tea.Sequence(
+						api.FetchProjects(
+							m.config.APIKey,
+							m.config.WorkspaceId,
+						),
+						m.weekView.Init(),
 					)
-					return m, nil
-				case ProjectView:
-					m.modal = modal.NewHelp(
-						help.GenerateSection("Project Keys", help.Project),
-						help.GenerateSection("Global Keys", help.Global),
-					)
-					return m, nil
 				case SettingsView:
-					m.modal = modal.NewHelp(
-						help.GenerateSection("Settings Keys", help.Settings),
-						help.GenerateSection("Global Keys", help.Global),
-					)
-					return m, nil
-				default:
-					m.modal = modal.NewHelp(
-						help.GenerateSection("Global Keys", help.Global),
-					)
+					return m, settings.Init()
 				}
+				return m, nil
+			}
+		case "n":
+			switch m.currentView {
+			case EntriesView:
+				m.showModal = true
+				m.modal = modal.NewEntryForm(m.config, m.projects)
+				return m, nil
+			}
+		case "?":
+			m.showModal = true
+			switch m.currentView {
+			case EntriesView:
+				m.modal = modal.NewHelp(
+					help.GenerateSection("Entries Keys", help.Entry),
+					help.GenerateSection("Global Keys", help.Global),
+				)
+				return m, nil
+			case ProjectsView:
+				m.modal = modal.NewHelp(
+					help.GenerateSection("Projects Keys", help.Projects),
+					help.GenerateSection("Global Keys", help.Global),
+				)
+				return m, nil
+			case ProjectView:
+				m.modal = modal.NewHelp(
+					help.GenerateSection("Project Keys", help.Project),
+					help.GenerateSection("Global Keys", help.Global),
+				)
+				return m, nil
+			case SettingsView:
+				m.modal = modal.NewHelp(
+					help.GenerateSection("Settings Keys", help.Settings),
+					help.GenerateSection("Global Keys", help.Global),
+				)
+				return m, nil
+			default:
+				m.modal = modal.NewHelp(
+					help.GenerateSection("Global Keys", help.Global),
+				)
 			}
 		}
 

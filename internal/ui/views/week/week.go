@@ -89,7 +89,7 @@ func (m Model) Init() tea.Cmd {
 	)
 }
 
-func (m Model) SetSize(width, height int) Model {
+func (m *Model) SetSize(width, height int) {
 	h, v := TableStyle.GetFrameSize()
 	heightPadding := 6
 	widthPadding := 1
@@ -105,8 +105,7 @@ func (m Model) SetSize(width, height int) Model {
 
 	cols := m.table.Columns()
 	cols[0].Width = m.width - h - 5 - ColumnWidth*len(cols)
-
-	return m
+	m.table.SetRows(m.setTableData())
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -114,9 +113,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.SetSize(msg.Width, msg.Height)
-		m.table.SetRows(m.setTableData())
 
 	case messages.EntriesLoadedMsg:
 		m.entries = msg.Entries

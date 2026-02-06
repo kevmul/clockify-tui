@@ -82,6 +82,11 @@ func Init() tea.Cmd {
 	return textinput.Blink
 }
 
+func (m *Model) SetSize(width, height int) {
+	m.viewport.Width = width
+	m.viewport.Height = height
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
