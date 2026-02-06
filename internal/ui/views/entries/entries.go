@@ -50,16 +50,16 @@ func (m Model) Init() tea.Cmd {
 	)
 }
 
+func (m *Model) SetSize(width, height int) {
+	h, v := docStyle.GetFrameSize()
+	m.list.SetSize(width-h, height-v-5)
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-
-	// Set the list size when the window size changes
-	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.list.SetSize(msg.Width-h, msg.Height-v-5)
 
 	case tea.KeyMsg:
 		switch msg.String() {
