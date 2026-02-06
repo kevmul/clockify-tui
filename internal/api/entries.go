@@ -56,6 +56,34 @@ func FetchEntries(apiKey, workspaceId, userId string) tea.Cmd {
 	}
 }
 
+// FetchEntriesForWeek returns a command that fetches time entries for a specific week
+func FetchEntriesForWeek(apiKey, workspaceId, userId string, weekStart time.Time) tea.Cmd {
+	return func() tea.Msg {
+		client := NewClient(apiKey)
+
+		// Calculate start and end of the week
+		weekEnd := weekStart.AddDate(0, 0, 7)
+		startStr := weekStart.Format("2006-01-02")
+		endStr := weekEnd.Format("2006-01-02")
+
+		endpoint := "/workspaces/%s/user/%s/time-entries?start=%sT00:00:00Z&end=%sT00:00:00Z"
+		body, err := client.Get(fmt.Sprintf(endpoint, workspaceId, userId, startStr, endStr))
+
+		if err != nil {
+			return messages.ErrorMsg{Err: err}
+		}
+
+		var entries []models.Entry
+		if err := json.Unmarshal(body, &entries); err != nil {
+			return messages.ErrorMsg{Err: fmt.Errorf("failed to parse entries: %w", err)}
+		}
+
+		return messages.EntriesLoadedMsg{
+			Entries: entries,
+		}
+	}
+}
+
 // CreateTimeEntry creates a new time entry in Clockify
 // Takes all the necessary parameters and returns an error if creation fails
 func (c *Client) CreateTimeEntry(workspaceID, projectID, taskID, description, startTimeStr, endTimeStr string, date time.Time) (models.Entry, error) {

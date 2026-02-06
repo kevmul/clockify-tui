@@ -11,10 +11,10 @@ func TestEntryJSONSerialization(t *testing.T) {
 		ID:          "test-id",
 		Description: "Test task",
 		ProjectID:   "project-123",
-		Duration:    3600, // 1 hour
 		TimeInterval: IntervalTime{
-			Start: time.Date(2024, 1, 15, 9, 0, 0, 0, time.UTC),
-			End:   time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
+			Start:    time.Date(2024, 1, 15, 9, 0, 0, 0, time.UTC),
+			End:      time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
+			Duration: "PT1H",
 		},
 		WorkspaceID: "workspace-456",
 		UserID:      "user-789",
