@@ -14,7 +14,7 @@ import (
 // ================ Confirmation Selection =================
 func (m Model) viewConfirm() string {
 	// Implementation of confirmation view goes here
-	chosenDate := m.date.Format("January 2, 2006")
+	chosenDate := m.calendar.SelectedDate.Format("January 2, 2006")
 	chosenStart := m.timeStart.Value()
 	chosenEnd := m.timeEnd.Value()
 	chosenDescription := m.description.Value()
@@ -59,7 +59,7 @@ func (m Model) submitTimeEntry() tea.Cmd {
 		m.description.Value(),
 		m.timeStart.Value(),
 		m.timeEnd.Value(),
-		m.date,
+		m.calendar.SelectedDate,
 	)
 }
 
@@ -73,7 +73,7 @@ func (m Model) updateTimeEntry() tea.Cmd {
 		m.description.Value(),
 		m.timeStart.Value(),
 		m.timeEnd.Value(),
-		m.date,
+		m.calendar.SelectedDate,
 	)
 }
 

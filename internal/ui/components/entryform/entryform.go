@@ -6,10 +6,13 @@ import (
 	"clockify-app/internal/config"
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
+	"clockify-app/internal/styles"
+	"clockify-app/internal/ui/components/calendar"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	// "github.com/charmbracelet/lipgloss"
 )
 
 // These constants represent each screen in our UI flow
@@ -41,7 +44,7 @@ type Model struct {
 	selected int // Index of selected item (not currently used but kept for future)
 
 	// User inputs
-	date           time.Time       // Selected date for time entry
+	calendar       calendar.Model  // Calendar component for date selection
 	timeStart      textinput.Model // Text input for start time (e.g., "9:00 AM")
 	timeEnd        textinput.Model // Text input for end time (e.g., "5:00 PM")
 	description    textinput.Model // Text input for task description
@@ -60,6 +63,11 @@ type Model struct {
 }
 
 func New(cfg *config.Config, projects []models.Project) Model {
+	// Create and configure the calendar component
+	calendarModel := calendar.New()
+	calendarModel.Styles.InitialDay = calendarModel.Styles.Selected.Background(styles.Primary).Foreground(styles.Muted).Bold(true)
+	calendarModel.Styles.Selected = calendarModel.Styles.Selected.Background(styles.Secondary).Foreground(styles.Background).Bold(true)
+
 	// Create and configure the start time input
 	timeStartInput := textinput.New()
 	timeStartInput.Placeholder = "e.g., 9a"
@@ -93,7 +101,7 @@ func New(cfg *config.Config, projects []models.Project) Model {
 		apiKey:        cfg.APIKey,
 		workspaceID:   cfg.WorkspaceId,
 		step:          stepDateSelect, // Start at date selection
-		date:          time.Now(),     // Default to today
+		calendar:      calendarModel,
 		timeStart:     timeStartInput,
 		timeEnd:       timeEndInput,
 		description:   descriptionInput,
@@ -110,9 +118,11 @@ func (m Model) UpdateEntry(entry models.Entry) Model {
 	m.editing = true
 
 	m.selectedEntry = entry
-	m.date = entry.TimeInterval.Start.In(time.Local)
 
 	m.description.SetValue(entry.Description)
+
+	// Setup Calendar
+	m.calendar.SetSelectedDay(entry.TimeInterval.Start.In(time.Local))
 
 	// Pre-fill time inputs
 	startStr := entry.TimeInterval.Start.In(time.Local).Format("3:04 PM")
@@ -309,7 +319,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch m.step {
 	case stepDateSelect:
-		m, cmd = m.updateDateSelect(msg)
+		// m, cmd = m.updateDateSelect(msg)
+		m.calendar, _ = m.calendar.Update(msg)
 		m.StepLines = getLines(m.viewDateSelect())
 	case stepDescriptionInput:
 		m, cmd = m.updateDescriptionInput(msg)
