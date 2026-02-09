@@ -240,6 +240,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					help.GenerateSection("Global Keys", help.Global),
 				)
 				return m, nil
+			case WeekView:
+				m.modal = modal.NewHelp(
+					help.GenerateSection("Week View Keys", help.Week),
+					help.GenerateSection("Global Keys", help.Global),
+				)
+				return m, nil
 			case SettingsView:
 				m.modal = modal.NewHelp(
 					help.GenerateSection("Settings Keys", help.Settings),

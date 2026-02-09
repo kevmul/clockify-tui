@@ -26,10 +26,11 @@ type Model struct {
 	entries  []models.Entry
 	projects []models.Project
 
-	table  table.Model
-	width  int
-	height int
-	ready  bool
+	table     table.Model
+	weekStart time.Time
+	width     int
+	height    int
+	ready     bool
 }
 
 func New(cfg *config.Config) Model {
@@ -71,10 +72,11 @@ func New(cfg *config.Config) Model {
 	t.SetStyles(s)
 
 	return Model{
-		config:  cfg,
-		entries: []models.Entry{},
-		table:   t,
-		ready:   false,
+		config:    cfg,
+		entries:   []models.Entry{},
+		table:     t,
+		weekStart: startOfWeek,
+		ready:     false,
 	}
 }
 
@@ -108,11 +110,40 @@ func (m *Model) SetSize(width, height int) {
 	m.table.SetRows(m.setTableData())
 }
 
+func (m *Model) PreviousWeek() tea.Cmd {
+	m.weekStart = m.weekStart.AddDate(0, 0, -7)
+	return api.FetchEntriesForWeek(
+		m.config.APIKey,
+		m.config.WorkspaceId,
+		m.config.UserId,
+		m.weekStart,
+	)
+}
+
+func (m *Model) NextWeek() tea.Cmd {
+	m.weekStart = m.weekStart.AddDate(0, 0, 7)
+	return api.FetchEntriesForWeek(
+		m.config.APIKey,
+		m.config.WorkspaceId,
+		m.config.UserId,
+		m.weekStart,
+	)
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "h", "left":
+			cmd = m.PreviousWeek()
+			cmds = append(cmds, cmd)
+		case "l", "right":
+			cmd = m.NextWeek()
+			cmds = append(cmds, cmd)
+		}
 
 	case messages.EntriesLoadedMsg:
 		m.entries = msg.Entries
@@ -136,8 +167,7 @@ func (m Model) View() string {
 func (m Model) setTableData() []table.Row {
 	rows := []table.Row{}
 	groupedEntries := groupEntriesByProject(m.entries)
-	today := time.Now()
-	startOfWeek := today.AddDate(0, 0, -int(today.Weekday()))
+	startOfWeek := m.weekStart
 	dailyTotals := make(map[string]time.Duration)
 	for _, group := range groupedEntries {
 		project, _ := utils.FindProjectById(m.projects, group[0].ProjectID)

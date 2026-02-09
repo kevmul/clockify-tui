@@ -143,6 +143,36 @@ var Project = ProjectKeyMap{
 }
 
 // =======================================
+// Week Key Bindings
+// =======================================
+
+type WeekKeyMap struct {
+	PreviousWeek key.Binding
+	NextWeek     key.Binding
+	Up           key.Binding
+	Down         key.Binding
+}
+
+var Week = WeekKeyMap{
+	PreviousWeek: key.NewBinding(
+		key.WithKeys("h", "left"),
+		key.WithHelp("←/h", "Previous Week"),
+	),
+	NextWeek: key.NewBinding(
+		key.WithKeys("l", "right"),
+		key.WithHelp("→/l", "Next Week"),
+	),
+	Up: key.NewBinding(
+		key.WithKeys("up", "k"),
+		key.WithHelp("↑/k", "Move up"),
+	),
+	Down: key.NewBinding(
+		key.WithKeys("down", "j"),
+		key.WithHelp("↓/j", "Move down"),
+	),
+}
+
+// =======================================
 // Settings Key Bindings
 // =======================================
 
