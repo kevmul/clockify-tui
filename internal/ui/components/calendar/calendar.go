@@ -60,28 +60,28 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("t", "today"),
 		),
 		Next: key.NewBinding(
-			key.WithKeys("→", "l"),
+			key.WithKeys("right", "l"),
 			key.WithHelp("→/l", "next day"),
 		),
 		Previous: key.NewBinding(
-			key.WithKeys("←", "h"),
+			key.WithKeys("left", "h"),
 			key.WithHelp("←/h", "previous day"),
 		),
 		LineUp: key.NewBinding(
-			key.WithKeys("↑", "k"),
+			key.WithKeys("up", "k"),
 			key.WithHelp("↑/k", "previous week"),
 		),
 		LineDown: key.NewBinding(
-			key.WithKeys("↓", "j"),
+			key.WithKeys("down", "j"),
 			key.WithHelp("↓/j", "next week"),
 		),
 		PageUp: key.NewBinding(
-			key.WithKeys("pgup"),
-			key.WithHelp("pgup", "previous month"),
+			key.WithKeys("pgup", "H"),
+			key.WithHelp("pgup/H", "previous month"),
 		),
 		PageDown: key.NewBinding(
-			key.WithKeys("pgdn"),
-			key.WithHelp("pgdn", "next month"),
+			key.WithKeys("pgdown", "L"),
+			key.WithHelp("pgdownn/L", "next month"),
 		),
 	}
 }

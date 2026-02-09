@@ -319,7 +319,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch m.step {
 	case stepDateSelect:
-		// m, cmd = m.updateDateSelect(msg)
 		m.calendar, _ = m.calendar.Update(msg)
 		m.StepLines = getLines(m.viewDateSelect())
 	case stepDescriptionInput:
