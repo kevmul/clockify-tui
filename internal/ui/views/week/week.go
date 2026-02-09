@@ -148,6 +148,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case messages.EntriesLoadedMsg:
 		m.entries = msg.Entries
 		m.table.SetRows(m.setTableData())
+		m.table.SetColumns(m.setTableColumns())
+		m.SetSize(m.width, m.height)
 		m.ready = true
 
 	case messages.ProjectsLoadedMsg:
@@ -164,7 +166,26 @@ func (m Model) View() string {
 	return TableStyle.Render(m.table.View())
 }
 
+func (m Model) setTableColumns() []table.Column {
+	cols := []table.Column{
+		{Title: "Project", Width: 20},
+	}
+
+	for i := range 5 {
+		day := m.weekStart.AddDate(0, 0, i+1)
+
+		colTitle := day.Format("Mon01/02 ")
+		cols = append(cols, table.Column{Title: colTitle, Width: ColumnWidth})
+	}
+
+	// Now we can have the total at the end
+	cols = append(cols, table.Column{Title: "Total", Width: ColumnWidth})
+
+	return cols
+}
+
 func (m Model) setTableData() []table.Row {
+
 	rows := []table.Row{}
 	groupedEntries := groupEntriesByProject(m.entries)
 	startOfWeek := m.weekStart
