@@ -67,8 +67,8 @@ func (m *Model) validate() {
 		timeEndErr = "End time cannot be empty."
 	}
 
-	startTime, err1 := utils.ParseTime(startStr, m.date)
-	endTime, err2 := utils.ParseTime(endStr, m.date)
+	startTime, err1 := utils.ParseTime(startStr, m.calendar.SelectedDate)
+	endTime, err2 := utils.ParseTime(endStr, m.calendar.SelectedDate)
 
 	if err1 != nil {
 		timeStartErr = "Invalid start time format. Use HH:MM."

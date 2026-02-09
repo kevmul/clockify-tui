@@ -69,7 +69,7 @@ func (m SimpleModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m SimpleModel) View() string {
-	form := styles.BoxStyle.Render(m.form.View())
+	form := styles.BoxStyle.Width(styles.ModalWidth).Render(m.form.View())
 	return lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height).

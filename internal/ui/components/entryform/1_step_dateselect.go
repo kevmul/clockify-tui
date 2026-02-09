@@ -15,11 +15,20 @@ func (m Model) viewDateSelect() string {
 	title := styles.TitleStyle.Margin(0, 0).Render("Select Date")
 	subtitle := styles.SubtitleStyle.Margin(0, 0, 1, 0).Render("Use arrow keys to navigate, Enter to select")
 
-	dateSelect := fmt.Sprintf("📅 %s", m.date.Format("Monday, January 2, 2006"))
-	if m.date.Equal(time.Now()) {
-		dateSelect += " (Today)"
-	}
-	return lipgloss.JoinVertical(lipgloss.Top, title, subtitle, dateSelect)
+	// return m.calendar.View()
+	dateSelect := fmt.Sprintf("Selected Date\n%s", m.calendar.SelectedDate.Format("Mon, January 02, 2006"))
+
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		title,
+		subtitle,
+		lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			lipgloss.NewStyle().PaddingRight(2).Render(m.calendar.View()),
+			dateSelect,
+		),
+	)
+
 }
 
 func (m Model) updateDateSelect(msg tea.Msg) (Model, tea.Cmd) {
@@ -31,18 +40,7 @@ func (m Model) updateDateSelect(msg tea.Msg) (Model, tea.Cmd) {
 
 		case "t":
 			// 't' key to jump to today
-			m.date = time.Now()
-
-		case "left", "h":
-			if m.step == stepDateSelect {
-				m.date = m.date.AddDate(0, 0, -1)
-			}
-
-		// Right arrow or 'l' (vim style) - next day
-		case "right", "l":
-			if m.step == stepDateSelect {
-				m.date = m.date.AddDate(0, 0, 1)
-			}
+			m.calendar.SelectedDate = time.Now()
 		}
 	}
 	return m, nil

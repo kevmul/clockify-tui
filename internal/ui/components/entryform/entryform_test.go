@@ -121,28 +121,28 @@ func TestFilterProjects(t *testing.T) {
 
 func TestDateSelectUpdate(t *testing.T) {
 	model := New(&config.Config{}, []models.Project{})
-	initialDate := model.date
+	initialDate := model.calendar.SelectedDate
 
 	// Test left arrow (previous day)
 	msg := tea.KeyMsg{Type: tea.KeyLeft}
-	updated, _ := model.updateDateSelect(msg)
-	if !updated.date.Before(initialDate) {
+	model.calendar, _ = model.calendar.Update(msg)
+	if !model.calendar.SelectedDate.Before(initialDate) {
 		t.Error("Left arrow should move to previous day")
 	}
 
 	// Test right arrow (next day)
 	msg = tea.KeyMsg{Type: tea.KeyRight}
-	updated, _ = updated.updateDateSelect(msg)
-	if !updated.date.Equal(initialDate) {
+	model.calendar, _ = model.calendar.Update(msg)
+	if !model.calendar.SelectedDate.Equal(initialDate) {
 		t.Error("Right arrow should move to next day")
 	}
 
 	// Test 't' key (today)
-	model.date = time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local)
+	model.calendar.SelectedDate = time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local)
 	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}
-	updated, _ = model.updateDateSelect(msg)
+	model.calendar, _ = model.calendar.Update(msg)
 	today := time.Now()
-	if !updated.date.Truncate(24 * time.Hour).Equal(today.Truncate(24 * time.Hour)) {
+	if !model.calendar.SelectedDate.Truncate(24 * time.Hour).Equal(today.Truncate(24 * time.Hour)) {
 		t.Error("'t' key should set date to today")
 	}
 }
