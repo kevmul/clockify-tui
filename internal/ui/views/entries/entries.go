@@ -81,6 +81,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					return messages.EntryDeleteStartedMsg{EntryId: selectedEntry.ID}
 				}
 			}
+		case "c":
+			// Copy the selected entry 
+			if len(m.entries) > 0 {
+				selectedEntry := m.entries[m.list.Index()]
+				// Open the edit modal
+				return m, func() tea.Msg {
+					return messages.EntryCopyStartedMsg{Entry: selectedEntry}
+				}
+			}
 		}
 
 	case messages.EntriesLoadedMsg:
