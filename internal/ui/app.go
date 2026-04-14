@@ -350,6 +350,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.renderContent())
 		return m, nil
 
+	case messages.EntryCopyStartedMsg:
+		m.showModal = true
+		m.modal = modal.CopyEntryForm(m.config, m.projects, msg.Entry)
+		m.viewport.SetContent(m.renderContent())
+		return m, nil
+
 	case messages.EntryDeleteStartedMsg:
 		m.showModal = true
 		m.modal = modal.NewDeleteConfirmation(msg.EntryId)

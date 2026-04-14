@@ -71,6 +71,25 @@ func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models
 	}
 }
 
+func CopyEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
+	form := entryform.New(cfg, projects)
+	form = form.CopyEntry(entry)
+	viewport := viewport.New(0, styles.ModalHeight)
+	viewport.SetContent(form.View())
+
+	if viewport.Height > viewport.TotalLineCount() {
+		viewport.Height = viewport.TotalLineCount()
+		viewport.SetContent(form.View())
+	}
+
+	return &Model{
+		modalType: EntryModal,
+		entryForm: &form,
+		viewport:  viewport,
+		title:     "Copy Entry",
+	}
+}
+
 func NewDeleteConfirmation(entryId string) *Model {
 	deleteConfirmation := confirmation.New(entryId, "entry")
 	viewport := viewport.New(0, 4)

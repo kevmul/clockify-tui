@@ -114,6 +114,42 @@ func New(cfg *config.Config, projects []models.Project) Model {
 	}
 }
 
+func (m Model) CopyEntry(entry models.Entry) Model {
+	m.editing = false
+
+	m.selectedEntry = entry
+
+	m.description.SetValue(entry.Description)
+
+	// Setup Calendar
+	m.calendar.SetSelectedDay(entry.TimeInterval.Start.In(time.Local))
+
+	// Pre-fill time inputs
+	startStr := entry.TimeInterval.Start.In(time.Local).Format("3:04 PM")
+	endStr := entry.TimeInterval.End.In(time.Local).Format("3:04 PM")
+	m.timeStart.SetValue(startStr)
+	m.timeEnd.SetValue(endStr)
+
+	// Find and select the project
+	for i, proj := range m.projects {
+		if proj.ID == entry.ProjectID {
+			m.selectedProj = proj
+			m.selectedProjID = i
+			break
+		}
+	}
+
+	// Find the cursor position for the project
+	for i, proj := range m.projects {
+		if proj.ID == entry.ProjectID {
+			m.cursor = i
+			break
+		}
+	}
+
+	return m
+}
+
 func (m Model) UpdateEntry(entry models.Entry) Model {
 	m.editing = true
 

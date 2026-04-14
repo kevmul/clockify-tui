@@ -49,6 +49,7 @@ var Global = GlobalKeyMap{
 type EntryKeyMap struct {
 	Delete key.Binding
 	Edit   key.Binding
+	Copy   key.Binding
 	New    key.Binding
 	Up     key.Binding
 	Down   key.Binding
@@ -85,6 +86,10 @@ var Entry = EntryKeyMap{
 	Edit: key.NewBinding(
 		key.WithKeys("e"),
 		key.WithHelp("e", "Edit entry"),
+	),
+	Copy: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "Copy entry"),
 	),
 	Delete: key.NewBinding(
 		key.WithKeys("d"),

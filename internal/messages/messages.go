@@ -84,6 +84,10 @@ type EntryUpdatedMsg struct {
 	Entry models.Entry
 }
 
+type EntryCopyStartedMsg struct {
+	Entry models.Entry
+}
+
 // =====================================
 // Modal messages
 // =====================================
