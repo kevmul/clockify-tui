@@ -351,7 +351,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case messages.EntryCopyStartedMsg:
-		m.showModal = true 
+		m.showModal = true
 		m.modal = modal.CopyEntryForm(m.config, m.projects, msg.Entry)
 		m.viewport.SetContent(m.renderContent())
 		return m, nil

@@ -82,7 +82,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				}
 			}
 		case "c":
-			// Copy the selected entry 
+			// Copy the selected entry
 			if len(m.entries) > 0 {
 				selectedEntry := m.entries[m.list.Index()]
 				// Open the edit modal
