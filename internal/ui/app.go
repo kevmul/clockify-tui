@@ -14,6 +14,7 @@ import (
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/ui/components/modal"
 	"clockify-app/internal/ui/views/entries"
+	"clockify-app/internal/ui/views/month"
 	"clockify-app/internal/ui/views/project"
 	"clockify-app/internal/ui/views/projects"
 	"clockify-app/internal/ui/views/settings"
@@ -30,6 +31,7 @@ const (
 	SettingsView View = iota
 	EntriesView
 	WeekView
+	MonthView
 	ProjectsView
 	ProjectView
 )
@@ -42,6 +44,7 @@ type Page struct {
 var pages = []Page{
 	{"Entries", EntriesView},
 	{"WeekView", WeekView},
+	{"MonthView", MonthView},
 	{"Projects", ProjectsView},
 	{"Settings", SettingsView},
 }
@@ -62,6 +65,7 @@ type Model struct {
 	projectsView projects.Model // List of Projects
 	projectView  project.Model  // Single Project view
 	weekView     week.Model     // Week view
+	monthView    month.Model    // Month view
 
 	// Modal state
 	modal     *modal.Model
@@ -93,6 +97,7 @@ func NewModel() Model {
 		entriesView:  entries.New(cfg),
 		projectsView: projects.New(cfg),
 		weekView:     week.New(cfg),
+		monthView:    month.New(cfg),
 		ready:        false,
 	}
 }
@@ -127,6 +132,9 @@ func (m Model) initializeFirstViewCmd() tea.Cmd {
 			),
 			m.weekView.Init(),
 		)
+
+	case MonthView: 
+		return m.monthView.Init()
 	}
 	return nil
 }
@@ -165,6 +173,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.projectView, cmd = m.projectView.Update(msg)
 		case WeekView:
 			m.weekView.SetSize(m.width, m.height)
+		case MonthView: 
+			m.monthView.SetSize(m.width, m.height)
 		case SettingsView:
 			m.settingsView.SetSize(m.width, m.height)
 		}
@@ -181,7 +191,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "1", "2", "3", "4":
+		case "1", "2", "3", "4", "5":
 			if num, err := strconv.Atoi(msg.String()); err == nil {
 				m.currentView = pages[num-1].Key
 				m.viewport.SetContent(m.renderContent())
@@ -207,6 +217,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						),
 						m.weekView.Init(),
 					)
+				case MonthView:
+					m.monthView.SetSize(m.width, m.height)
+					return m, m.monthView.Init()
 				case SettingsView:
 					return m, settings.Init()
 				}
@@ -340,6 +353,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.entriesView, cmd = m.entriesView.Update(msg)
 		case WeekView:
 			m.weekView, cmd = m.weekView.Update(msg)
+		case MonthView:
+			m.monthView, cmd = m.monthView.Update(msg)
 		}
 		m.viewport.SetContent(m.renderContent())
 		return m, cmd
@@ -397,6 +412,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.projectView, cmd = m.projectView.Update(msg)
 	case WeekView:
 		m.weekView, cmd = m.weekView.Update(msg)
+	case MonthView:
+		m.monthView, cmd = m.monthView.Update(msg)
 	}
 	cmds = append(cmds, cmd)
 
@@ -426,7 +443,7 @@ func (m Model) View() string {
 	scrollbar := utils.RenderScrollbarSimple(m.viewport)
 
 	switch m.currentView {
-	case EntriesView, ProjectsView, WeekView:
+	case EntriesView, ProjectsView, WeekView, MonthView:
 		scrollbar = ""
 	}
 	// The viewport already contains the view content in Update
@@ -503,6 +520,8 @@ func (m Model) renderContent() string {
 		return m.projectView.View()
 	case WeekView:
 		return m.weekView.View()
+	case MonthView:
+		return m.monthView.View()
 	}
 
 	return ""
