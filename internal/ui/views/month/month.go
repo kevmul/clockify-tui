@@ -23,19 +23,19 @@ type Model struct {
 	entries      []models.Entry
 	currentMonth time.Time
 
-	table        table.Model
+	table table.Model
 
-	width        int 
-	height       int 
-	ready        bool
+	width  int
+	height int
+	ready  bool
 }
 
 func New(cfg *config.Config) Model {
-	m := Model {
-		config: cfg,
-		entries: []models.Entry{},
+	m := Model{
+		config:       cfg,
+		entries:      []models.Entry{},
 		currentMonth: time.Now(),
-		ready: false,
+		ready:        false,
 	}
 
 	t := table.New(
@@ -138,7 +138,7 @@ func (m Model) PreviousMonth() (Model, tea.Cmd) {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var cmd tea.Cmd 
+	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

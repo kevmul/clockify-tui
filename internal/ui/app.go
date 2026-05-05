@@ -133,7 +133,7 @@ func (m Model) initializeFirstViewCmd() tea.Cmd {
 			m.weekView.Init(),
 		)
 
-	case MonthView: 
+	case MonthView:
 		return m.monthView.Init()
 	}
 	return nil
@@ -173,7 +173,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.projectView, cmd = m.projectView.Update(msg)
 		case WeekView:
 			m.weekView.SetSize(m.width, m.height)
-		case MonthView: 
+		case MonthView:
 			m.monthView.SetSize(m.width, m.height)
 		case SettingsView:
 			m.settingsView.SetSize(m.width, m.height)
