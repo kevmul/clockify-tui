@@ -10,9 +10,8 @@ import (
 	"clockify-app/internal/ui/components/calendar"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	// "github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 )
 
 // These constants represent each screen in our UI flow
@@ -72,30 +71,30 @@ func New(cfg *config.Config, projects []models.Project) Model {
 	timeStartInput := textinput.New()
 	timeStartInput.Placeholder = "e.g., 9a"
 	timeStartInput.CharLimit = 8 // "12:00 PM" is 8 characters
-	timeStartInput.Width = 30
+	timeStartInput.SetWidth(30)
 
 	// Create and configure the time end input
 	timeEndInput := textinput.New()
 	timeEndInput.Placeholder = "e.g., 9a"
 	timeEndInput.CharLimit = 8 // "12:00 PM" is 8 characters
-	timeEndInput.Width = 30
+	timeEndInput.SetWidth(30)
 
 	// Create and configure the task name input
 	descriptionInput := textinput.New()
 	descriptionInput.Placeholder = "Enter task description"
 	descriptionInput.CharLimit = 100
-	descriptionInput.Width = 50
+	descriptionInput.SetWidth(50)
 
 	// Create and configure the task name input
 	taskInput := textinput.New()
 	taskInput.Placeholder = "Enter task description"
 	taskInput.CharLimit = 100
-	taskInput.Width = 50
+	taskInput.SetWidth(50)
 
 	// Create and configure the project search input
 	searchInput := textinput.New()
 	searchInput.Placeholder = "Search projects..."
-	searchInput.Width = 50
+	searchInput.SetWidth(50)
 
 	return Model{
 		apiKey:        cfg.APIKey,
@@ -202,7 +201,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Global key handling can go here if needed
 		switch msg.String() {
 		case "esc":
@@ -380,7 +379,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	// Implementation of View method goes here
 	s := ""
 	switch m.step {
@@ -402,7 +401,7 @@ func (m Model) View() string {
 		s += "Unknown step"
 	}
 
-	return s
+	return tea.NewView(s)
 }
 
 func getLines(s string) int {

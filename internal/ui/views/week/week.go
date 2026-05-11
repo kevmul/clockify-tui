@@ -12,9 +12,9 @@ import (
 
 	"time"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 var TableStyle = lipgloss.NewStyle().Padding(1, 2)
@@ -135,7 +135,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "h", "left":
 			cmd = m.PreviousWeek()
@@ -162,8 +162,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
-	return TableStyle.Render(m.table.View())
+func (m Model) View() tea.View {
+	return tea.NewView(TableStyle.Render(m.table.View()))
 }
 
 func (m Model) setTableColumns() []table.Column {

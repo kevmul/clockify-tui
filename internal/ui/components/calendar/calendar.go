@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type Model struct {
@@ -110,7 +110,7 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, m.KeyMap.Today):
 			m.SelectedDate = time.Now()
@@ -135,7 +135,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	header := m.Styles.Header.Render(m.CurrentDate.Format("January 2006"))
 
 	// Get the first day of the current month
@@ -181,10 +181,10 @@ func (m Model) View() string {
 		rows[row] = lipgloss.JoinHorizontal(lipgloss.Left, cells...)
 	}
 
-	return lipgloss.JoinVertical(
+	return tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Top,
 		header,
 		" Su  Mo  Tu  We  Th  Fr  Sa ",
 		lipgloss.JoinVertical(lipgloss.Top, rows...),
-	)
+	))
 }

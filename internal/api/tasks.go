@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func (c *Client) GetTasks(workspaceID, projectID string) ([]models.Task, error) {

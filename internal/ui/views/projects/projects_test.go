@@ -6,7 +6,7 @@ import (
 	"clockify-app/internal/models"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func TestNew(t *testing.T) {

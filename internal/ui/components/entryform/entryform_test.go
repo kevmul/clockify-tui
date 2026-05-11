@@ -9,7 +9,7 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/models"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func TestNew(t *testing.T) {
@@ -124,14 +124,14 @@ func TestDateSelectUpdate(t *testing.T) {
 	initialDate := model.calendar.SelectedDate
 
 	// Test left arrow (previous day)
-	msg := tea.KeyMsg{Type: tea.KeyLeft}
+	msg := tea.KeyPressMsg{Type: tea.KeyLeft}
 	model.calendar, _ = model.calendar.Update(msg)
 	if !model.calendar.SelectedDate.Before(initialDate) {
 		t.Error("Left arrow should move to previous day")
 	}
 
 	// Test right arrow (next day)
-	msg = tea.KeyMsg{Type: tea.KeyRight}
+	msg = tea.KeyPressMsg{Type: tea.KeyRight}
 	model.calendar, _ = model.calendar.Update(msg)
 	if !model.calendar.SelectedDate.Equal(initialDate) {
 		t.Error("Right arrow should move to next day")
@@ -139,7 +139,7 @@ func TestDateSelectUpdate(t *testing.T) {
 
 	// Test 't' key (today)
 	model.calendar.SelectedDate = time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local)
-	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}
+	msg = tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}
 	model.calendar, _ = model.calendar.Update(msg)
 	today := time.Now()
 	if !model.calendar.SelectedDate.Truncate(24 * time.Hour).Equal(today.Truncate(24 * time.Hour)) {
@@ -151,14 +151,14 @@ func TestStepNavigation(t *testing.T) {
 	model := New(&config.Config{}, []models.Project{})
 
 	// Test tab navigation forward
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyPressMsg{Type: tea.KeyTab}
 	updated, _ := model.Update(msg)
 	if updated.step != stepDescriptionInput {
 		t.Errorf("Expected step %d after tab, got %d", stepDescriptionInput, updated.step)
 	}
 
 	// Test shift+tab navigation backward
-	msg = tea.KeyMsg{Type: tea.KeyShiftTab}
+	msg = tea.KeyPressMsg{Type: tea.KeyShiftTab}
 	updated, _ = updated.Update(msg)
 	if updated.step != stepDateSelect {
 		t.Errorf("Expected step %d after shift+tab, got %d", stepDateSelect, updated.step)
@@ -256,7 +256,7 @@ func TestEscapeKey(t *testing.T) {
 	model.step = stepProjectSelect
 	model.cursor = 5
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Type: tea.KeyEsc}
 	updated, _ := model.Update(msg)
 
 	// Should reset to initial state

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // GetProjects fetches all projects for a given workspace

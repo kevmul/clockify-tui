@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // ================ Date Selection =================
@@ -24,7 +24,7 @@ func (m Model) viewDateSelect() string {
 		subtitle,
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			lipgloss.NewStyle().PaddingRight(2).Render(m.calendar.View()),
+			lipgloss.NewStyle().PaddingRight(2).Render(m.calendar.View().Content),
 			dateSelect,
 		),
 	)
@@ -35,7 +35,7 @@ func (m Model) updateDateSelect(msg tea.Msg) (Model, tea.Cmd) {
 	// Implementation of date selection update goes here
 	// Left arrow or 'h' (vim style) - previous day
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 
 		case "t":

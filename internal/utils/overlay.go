@@ -4,8 +4,8 @@ import (
 	"clockify-app/internal/styles"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/viewport"
+	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -174,14 +174,14 @@ func RenderScrollbarSimple(viewport viewport.Model) string {
 func RenderScrollbar(viewport viewport.Model, offset int, topchar, bottomchar string) string {
 	var scrollbar strings.Builder
 	// Add 2 to account for top and bottom borders
-	viewportHeight := viewport.Height + offset
+	viewportHeight := viewport.Height() + offset
 	totalLines := viewport.TotalLineCount()
-	scrollPercent := float64(viewport.YOffset) / float64(totalLines-viewport.Height)
+	scrollPercent := float64(viewport.YOffset()) / float64(totalLines-viewport.Height())
 
 	thumbHeight := max(1, (viewportHeight*viewportHeight)/totalLines)
-	thumbPosition := int(float64(viewport.Height-thumbHeight) * scrollPercent)
+	thumbPosition := int(float64(viewport.Height()-thumbHeight) * scrollPercent)
 
-	requiresScrollbar := viewport.TotalLineCount() > viewport.Height
+	requiresScrollbar := viewport.TotalLineCount() > viewport.Height()
 
 	for i := range viewportHeight {
 		var char string

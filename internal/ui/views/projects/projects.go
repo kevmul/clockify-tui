@@ -8,9 +8,9 @@ import (
 	"clockify-app/internal/styles"
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type Model struct {
@@ -72,7 +72,7 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "enter": // Open selected project
 			if m.list.FilterState() == list.Filtering {
@@ -113,13 +113,13 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	if !m.ready {
-		return "Loading projects..."
+		return tea.NewView("Loading projects...")
 	}
 
 	if len(m.projects) == 0 {
-		return "No projects found."
+		return tea.NewView("No projects found.")
 	}
-	return docStyle.Render(m.list.View())
+	return tea.NewView(docStyle.Render(m.list.View()))
 }

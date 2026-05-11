@@ -11,9 +11,9 @@ import (
 	"clockify-app/internal/utils"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type ModalType int
@@ -36,12 +36,13 @@ type Model struct {
 
 func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 	form := entryform.New(cfg, projects)
-	viewport := viewport.New(0, styles.ModalHeight)
-	viewport.SetContent(form.View())
+	viewport := viewport.New()
+	viewport.SetHeight(styles.ModalHeight)
+	viewport.SetContent(form.View().Content)
 
-	if viewport.Height > viewport.TotalLineCount() {
-		viewport.Height = viewport.TotalLineCount()
-		viewport.SetContent(form.View())
+	if viewport.Height() > viewport.TotalLineCount() {
+		viewport.SetHeight(viewport.TotalLineCount())
+		viewport.SetContent(form.View().Content)
 	}
 
 	return &Model{
@@ -55,12 +56,14 @@ func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
 	form := entryform.New(cfg, projects)
 	form = form.UpdateEntry(entry)
-	viewport := viewport.New(0, styles.ModalHeight)
-	viewport.SetContent(form.View())
+	viewport := viewport.New()
+	viewport.SetHeight(0)
+	viewport.SetWidth(styles.ModalHeight)
+	viewport.SetContent(form.View().Content)
 
-	if viewport.Height > viewport.TotalLineCount() {
-		viewport.Height = viewport.TotalLineCount()
-		viewport.SetContent(form.View())
+	if viewport.Height() > viewport.TotalLineCount() {
+		viewport.SetHeight(viewport.TotalLineCount())
+		viewport.SetContent(form.View().Content)
 	}
 
 	return &Model{
@@ -74,12 +77,14 @@ func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models
 func CopyEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
 	form := entryform.New(cfg, projects)
 	form = form.CopyEntry(entry)
-	viewport := viewport.New(0, styles.ModalHeight)
-	viewport.SetContent(form.View())
+	viewport := viewport.New()
+	viewport.SetHeight(0)
+	viewport.SetWidth(styles.ModalHeight)
+	viewport.SetContent(form.View().Content)
 
-	if viewport.Height > viewport.TotalLineCount() {
-		viewport.Height = viewport.TotalLineCount()
-		viewport.SetContent(form.View())
+	if viewport.Height() > viewport.TotalLineCount() {
+		viewport.SetHeight(viewport.TotalLineCount())
+		viewport.SetContent(form.View().Content)
 	}
 
 	return &Model{
@@ -92,8 +97,10 @@ func CopyEntryForm(cfg *config.Config, projects []models.Project, entry models.E
 
 func NewDeleteConfirmation(entryId string) *Model {
 	deleteConfirmation := confirmation.New(entryId, "entry")
-	viewport := viewport.New(0, 4)
-	viewport.SetContent(deleteConfirmation.View())
+	viewport := viewport.New()
+	viewport.SetHeight(0)
+	viewport.SetWidth(4)
+	viewport.SetContent(deleteConfirmation.View().Content)
 
 	return &Model{
 		modalType:          DeleteConfirmation,
@@ -105,8 +112,10 @@ func NewDeleteConfirmation(entryId string) *Model {
 
 func NewHelp(sections ...help.HelpSection) *Model {
 	helpModel := help.New(sections...)
-	viewport := viewport.New(0, 10)
-	viewport.SetContent(helpModel.View())
+	viewport := viewport.New()
+	viewport.SetHeight(0)
+	viewport.SetWidth(10)
+	viewport.SetContent(helpModel.View().Content)
 	return &Model{
 		modalType: HelpModal,
 		help:      &helpModel,
@@ -129,7 +138,7 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// We might move this to the modal themselves later...
 		if msg.String() == "esc" || msg.String() == "q" || msg.String() == "ctrl+c" {
 			// Handle closing in the modal itself if needed (e.g. to reset form state), then send message to parent to close the modal
@@ -160,9 +169,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		*m.entryForm, cmd = m.entryForm.Update(msg)
 		// resize viewportHeight
 		if m.entryForm.StepLines <= styles.ModalHeight {
-			m.viewport.Height = m.entryForm.StepLines + 1
+			m.viewport.SetHeight(m.entryForm.StepLines + 1)
 		} else {
-			m.viewport.Height = styles.ModalHeight
+			m.viewport.SetHeight(styles.ModalHeight)
 		}
 	case DeleteConfirmation:
 		*m.deleteConfirmation, cmd = m.deleteConfirmation.Update(msg)
@@ -174,7 +183,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
-	if _, ok := msg.(tea.KeyMsg); ok {
+	if _, ok := msg.(tea.KeyPressMsg); ok {
 		// Update viewport content on key events
 		m.viewport.SetContent(m.RenderContent())
 	}
@@ -182,16 +191,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 
-	if m.viewport.TotalLineCount() <= m.viewport.Height {
+	if m.viewport.TotalLineCount() <= m.viewport.Height() {
 		// No scrollbar needed
 		// return styles.ModalStyle.Width(styles.ModalWidth).Render(viewport)
-		return lipgloss.JoinVertical(
+		return tea.NewView(lipgloss.JoinVertical(
 			lipgloss.Top,
 			createBorderTitle(m.title, styles.ModalWidth, false),
 			styles.ModalStyle.Render(m.viewport.View()),
-		)
+		))
 	}
 
 	viewport := lipgloss.JoinVertical(
@@ -200,13 +209,13 @@ func (m Model) View() string {
 		styles.ModalWithScrollStyle.Render(m.viewport.View()),
 	)
 
-	return lipgloss.JoinHorizontal(
+	return tea.NewView(lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		// styles.ModalWithScrollStyle.Width(styles.ModalWidth).Render(viewport),
 
 		viewport,
 		utils.RenderScrollbarForModal(m.viewport),
-	)
+	))
 
 }
 
@@ -237,11 +246,11 @@ func createBorderTitle(title string, modalWidth int, withScroll bool) string {
 func (m Model) RenderContent() string {
 	switch m.modalType {
 	case EntryModal:
-		return m.entryForm.View()
+		return m.entryForm.View().Content
 	case DeleteConfirmation:
-		return m.deleteConfirmation.View()
+		return m.deleteConfirmation.View().Content
 	case HelpModal:
-		return m.help.View()
+		return m.help.View().Content
 	}
 	return "MODAL"
 }

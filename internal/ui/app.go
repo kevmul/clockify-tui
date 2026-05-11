@@ -20,9 +20,9 @@ import (
 	"clockify-app/internal/ui/views/settings"
 	"clockify-app/internal/ui/views/week"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type View int
@@ -105,7 +105,6 @@ func NewModel() Model {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		m.initializeFirstViewCmd(),
-		tea.EnterAltScreen,
 	)
 }
 
@@ -151,15 +150,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Update viewport size
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width-1, msg.Height-verticalMarginHeight)
+			m.viewport = viewport.New()
 			// m.viewport.YPosition = headerHeight
 			m.viewport.SetContent(m.renderContent())
 			m.width = msg.Width
 			m.height = msg.Height
+			m.viewport.SetWidth(m.width)
+			m.viewport.SetHeight(m.height)
 			m.ready = true
 		} else {
-			m.viewport.Width = msg.Width - 1
-			m.viewport.Height = msg.Height - verticalMarginHeight
+			m.viewport.SetWidth(msg.Width - 1)
+			m.viewport.SetHeight(msg.Height - verticalMarginHeight)
 			m.width = msg.Width
 			m.height = msg.Height
 		}
@@ -182,7 +183,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, tea.Batch(cmds...)
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Global keybindings
 		if m.showModal {
 			// Let modal handle key events
@@ -420,7 +421,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
-	if _, ok := msg.(tea.KeyMsg); ok {
+	if _, ok := msg.(tea.KeyPressMsg); ok {
 		// Update viewport content on key events
 		m.viewport.SetContent(m.renderContent())
 	}
@@ -428,10 +429,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 
 	if !m.ready {
-		return "Loading..."
+		v := tea.NewView("Loading...")
+		return v
 	}
 
 	// Create a top navigation bar
@@ -457,19 +459,18 @@ func (m Model) View() string {
 
 	// Overlay modal if showing
 	if m.showModal && m.modal != nil {
-		content = utils.RenderWithModal(m.height-5, m.width, content, m.modal.View())
+		content = utils.RenderWithModal(m.height-5, m.width, content, m.modal.View().Content)
 	}
 
-	return lipgloss.JoinVertical(
+	v := tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Top,
 		navBar,
 		content,
 		styles.InfoBarStyle.Width(m.width).Render("[?]: help, [q][ctrl+c]: quit"),
-	)
-}
+	))
+	v.AltScreen = true
 
-func (m Model) Shutdown() tea.Cmd {
-	return tea.ExitAltScreen
+	return v
 }
 
 // Example helper function to render a tab
@@ -511,17 +512,17 @@ func (m Model) renderContent() string {
 	// Render active view
 	switch m.currentView {
 	case SettingsView:
-		return m.settingsView.View()
+		return m.settingsView.View().Content
 	case ProjectsView:
-		return m.projectsView.View()
+		return m.projectsView.View().Content
 	case EntriesView:
-		return m.entriesView.View()
+		return m.entriesView.View().Content
 	case ProjectView:
-		return m.projectView.View()
+		return m.projectView.View().Content
 	case WeekView:
-		return m.weekView.View()
+		return m.weekView.View().Content
 	case MonthView:
-		return m.monthView.View()
+		return m.monthView.View().Content
 	}
 
 	return ""

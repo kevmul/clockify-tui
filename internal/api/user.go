@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // GetUserInfo fetches the current user's information from Clockify

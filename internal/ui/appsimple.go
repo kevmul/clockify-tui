@@ -8,8 +8,8 @@ import (
 	"clockify-app/internal/styles"
 	"clockify-app/internal/ui/components/entryform"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type SimpleModel struct {
@@ -50,7 +50,7 @@ func (m SimpleModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		return m, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Global key handling can go here if needed
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -68,11 +68,13 @@ func (m SimpleModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m SimpleModel) View() string {
-	form := styles.BoxStyle.Width(styles.ModalWidth).Render(m.form.View())
-	return lipgloss.NewStyle().
+func (m SimpleModel) View() tea.View {
+	form := styles.BoxStyle.Width(styles.ModalWidth).Render(m.form.View().Content)
+	v := tea.NewView(lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height).
 		Align(lipgloss.Center, lipgloss.Center).
-		Render(form)
+		Render(form),
+	)
+	return v
 }

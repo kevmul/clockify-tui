@@ -4,8 +4,8 @@ import (
 	"clockify-app/internal/messages"
 	"clockify-app/internal/styles"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type Model struct {
@@ -27,7 +27,7 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "tab", "shift+tab", "left", "right", "l", "h":
 			// Toggle between buttons
@@ -63,16 +63,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	title := styles.TitleStyle.Margin(0, 0).Render("Delete Confirmation")
 	subtitle := styles.SubtitleStyle.Margin(0, 0, 1, 0).Render("Are you sure you want to delete this entry? This action cannot be undone.")
 
-	return lipgloss.JoinVertical(lipgloss.Top,
+	return tea.NewView(lipgloss.JoinVertical(lipgloss.Top,
 		title, subtitle,
 		lipgloss.JoinHorizontal(lipgloss.Left,
 			m.renderButtons(),
 		),
-	)
+	))
 }
 
 func (m Model) renderButtons() string {

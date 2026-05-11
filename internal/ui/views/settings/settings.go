@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type focusIndex int
@@ -47,7 +47,7 @@ func New(cfg *config.Config) Model {
 	apiKey.Placeholder = "Enter your Clockify API Key"
 	apiKey.Focus()
 	apiKey.CharLimit = 64
-	apiKey.Width = 50
+	apiKey.SetWidth(50)
 	apiKey.EchoMode = textinput.EchoNormal
 
 	apiKeyLocked := false
@@ -60,7 +60,7 @@ func New(cfg *config.Config) Model {
 	workspace := textinput.New()
 	workspace.Placeholder = "Select your Clockify Workspace"
 	workspace.CharLimit = 64
-	workspace.Width = 50
+	workspace.SetWidth(50)
 
 	if cfg.WorkspaceId != "" {
 		workspace.SetValue(cfg.WorkspaceName)
@@ -83,8 +83,8 @@ func Init() tea.Cmd {
 }
 
 func (m *Model) SetSize(width, height int) {
-	m.viewport.Width = width
-	m.viewport.Height = height
+	m.viewport.SetWidth(width)
+	m.viewport.SetHeight(height)
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -92,7 +92,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
@@ -247,7 +247,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	var b strings.Builder
 
 	b.WriteString(styles.TitleStyle.Render("⚙️ Settings"))
@@ -298,7 +298,7 @@ func (m Model) View() string {
 	// Help
 	b.WriteString("\n")
 
-	return lipgloss.NewStyle().Padding(1, 2).Render(b.String())
+	return tea.NewView(lipgloss.NewStyle().Padding(1, 2).Render(b.String()))
 }
 
 // Helper to render input labels with focus style

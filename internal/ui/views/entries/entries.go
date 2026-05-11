@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type Model struct {
@@ -61,7 +61,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "e":
 			// Edit the selected entry
@@ -146,7 +146,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case messages.ErrorMsg:
 		// Handle error (could set an error field in the model)
-		fmt.Printf("Error: %v\n", msg.Err)
+		lipgloss.Printf("Error: %v\n", msg.Err)
 	}
 
 	m.list, cmd = m.list.Update(msg)
@@ -165,8 +165,8 @@ func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 
-	return docStyle.Render(m.list.View())
+	return tea.NewView(docStyle.Render(m.list.View()))
 
 }

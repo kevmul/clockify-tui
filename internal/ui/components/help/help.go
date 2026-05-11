@@ -4,9 +4,9 @@ import (
 	"clockify-app/internal/styles"
 	"reflect"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type Model struct {
@@ -34,7 +34,7 @@ func (m *Model) setSize(width, height int) {
 	m.height = height
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 
 	content := ""
 
@@ -65,7 +65,7 @@ func (m Model) View() string {
 		}
 	}
 
-	return content
+	return tea.NewView(content)
 }
 
 func (m Model) Init() tea.Cmd {

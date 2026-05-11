@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // A single page view
@@ -39,7 +39,7 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 	// var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "n": // Create new task
 			// cmd = api.CreateTask(m.config.APIKey, m.config)
@@ -57,21 +57,21 @@ func (m Model) Update(msg any) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	title := styles.TitleStyle.Render("Project: " + m.project.Name)
 	if !m.ready {
-		return lipgloss.JoinVertical(
+		return tea.NewView(lipgloss.JoinVertical(
 			lipgloss.Top,
 			title,
 			"\nLoading tasks...",
-		)
+		))
 	}
 	if len(m.tasks) == 0 {
-		return lipgloss.JoinVertical(
+		return tea.NewView(lipgloss.JoinVertical(
 			lipgloss.Top,
 			title,
 			"\nNo tasks found for this project.",
-		)
+		))
 	}
 	s := strings.Builder{}
 
@@ -79,9 +79,9 @@ func (m Model) View() string {
 		s.WriteString(fmt.Sprintf("- %s\n", task.Name))
 
 	}
-	return lipgloss.JoinVertical(
+	return tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Top,
 		title,
 		s.String(),
-	)
+	))
 }

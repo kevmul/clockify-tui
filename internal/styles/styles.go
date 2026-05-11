@@ -1,6 +1,6 @@
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 var (
 	// Color
@@ -43,8 +43,8 @@ var (
 			MarginBottom(1)
 
 	SubtitleStyle = lipgloss.NewStyle().
-			Foreground(Muted).
-			Italic(true)
+			Foreground(Muted)
+		// Italic(true)
 
 	MutedTextStyle = lipgloss.NewStyle().
 			Foreground(Muted)
@@ -108,7 +108,7 @@ var (
 	ActiveButtonStyle = lipgloss.NewStyle().
 				Background(Secondary).
 				Foreground(lipgloss.Color("#FFFFFF")).
-				Underline(true).
+				UnderlineStyle(lipgloss.UnderlineCurly).
 				Padding(0, 2).
 				Bold(true)
 

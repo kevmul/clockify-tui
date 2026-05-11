@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // ================ Task Selection =================
@@ -85,7 +85,7 @@ func (m Model) updateTaskInput(msg tea.Msg) (Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "up", "k":
 			if m.cursor > 0 {
