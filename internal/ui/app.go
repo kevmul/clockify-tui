@@ -402,6 +402,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// Route to active view
+	handled := false
 	switch m.currentView {
 	case SettingsView:
 		m.settingsView, cmd = m.settingsView.Update(msg)
@@ -413,13 +414,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.projectView, cmd = m.projectView.Update(msg)
 	case WeekView:
 		m.weekView, cmd = m.weekView.Update(msg)
+		handled = true
 	case MonthView:
 		m.monthView, cmd = m.monthView.Update(msg)
+		handled = true
 	}
 	cmds = append(cmds, cmd)
 
-	m.viewport, cmd = m.viewport.Update(msg)
-	cmds = append(cmds, cmd)
+	if !handled {
+		// Only let viewport handle keys if the active view doesn't
+		m.viewport, cmd = m.viewport.Update(msg)
+		cmds = append(cmds, cmd)
+	} else if _, ok := msg.(tea.KeyPressMsg); !ok {
+		// Non-key messages still go to viewport (scroll position, resize, etc.)
+		m.viewport, cmd = m.viewport.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	if _, ok := msg.(tea.KeyPressMsg); ok {
 		// Update viewport content on key events

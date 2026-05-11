@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/table"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 )
 
 var TableStyle = lipgloss.NewStyle().Padding(0, 2)
@@ -23,12 +23,24 @@ type Model struct {
 	entries      []models.Entry
 	currentMonth time.Time
 
-	table table.Model
+	table *table.Table
 
 	width  int
 	height int
 	ready  bool
 }
+
+var (
+	headerStyle = lipgloss.NewStyle().
+			Foreground(styles.Primary).
+			Bold(true).
+			Align(lipgloss.Center)
+
+	cellStyle = lipgloss.NewStyle().
+			Padding(0, 1).
+			Width(14).
+			Align(lipgloss.Center)
+)
 
 func New(cfg *config.Config) Model {
 	m := Model{
@@ -38,21 +50,16 @@ func New(cfg *config.Config) Model {
 		ready:        false,
 	}
 
-	t := table.New(
-		table.WithColumns(m.setTableColumns()),
-		table.WithFocused(false),
-	)
-
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(styles.Secondary).
-		BorderBottom(true).
-		Bold(false)
-	s.Selected = lipgloss.NewStyle()
-	t.SetStyles(s)
-
-	m.table = t
+	m.table = table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(styles.Secondary)).
+		BorderRow(true).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			if row == table.HeaderRow {
+				return headerStyle
+			}
+			return cellStyle
+		})
 
 	return m
 }
@@ -61,11 +68,11 @@ func (m Model) Init() tea.Cmd {
 	return api.FetchEntriesForMonth(m.config.APIKey, m.config.WorkspaceId, m.config.UserId, m.currentMonth)
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 
 	footer := m.renderFooter()
 
-	return lipgloss.JoinVertical(
+	return tea.NewView(lipgloss.JoinVertical(
 		lipgloss.Left,
 		styles.TitleStyle.
 			PaddingTop(1).
@@ -74,24 +81,21 @@ func (m Model) View() string {
 		TableStyle.Render(
 			lipgloss.JoinVertical(
 				lipgloss.Left,
-				m.table.View(),
+				m.table.Render(),
 				footer,
 			),
 		),
-	)
+	))
 }
 
 func (m Model) renderFooter() string {
 	monthTotal := m.calculateMonthTotal()
 
-	totalStyle := lipgloss.NewStyle().
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(styles.Secondary).
-		BorderTop(true).
-		Width(m.table.Width())
+	totalStyle := lipgloss.NewStyle()
 
 	label := lipgloss.NewStyle().
 		Foreground(styles.Secondary).
+		Padding(0, 1).
 		Bold(true).
 		Render("Month Total")
 
@@ -124,7 +128,7 @@ func (m Model) NextMonth() (Model, tea.Cmd) {
 	m.currentMonth = m.currentMonth.AddDate(0, 1, 0)
 	m.ready = false
 	m.entries = []models.Entry{}
-	m.table.SetRows([]table.Row{})
+	m.table.ClearRows()
 	return m, api.FetchEntriesForMonth(m.config.APIKey, m.config.WorkspaceId, m.config.UserId, m.currentMonth)
 }
 
@@ -132,7 +136,7 @@ func (m Model) PreviousMonth() (Model, tea.Cmd) {
 	m.currentMonth = m.currentMonth.AddDate(0, -1, 0)
 	m.ready = false
 	m.entries = []models.Entry{}
-	m.table.SetRows([]table.Row{})
+	m.table.ClearRows()
 	return m, api.FetchEntriesForMonth(m.config.APIKey, m.config.WorkspaceId, m.config.UserId, m.currentMonth)
 
 }
@@ -141,7 +145,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "h", "left":
 			m, cmd = m.PreviousMonth()
@@ -153,52 +157,29 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	case messages.EntriesLoadedMsg:
 		m.entries = msg.Entries
-		m.table.SetColumns(m.setTableColumns())
-		m.table.SetRows(m.setTableData())
+		m.table.ClearRows()
+		m.table.Headers(m.tableHeaders()...)
+		m.table.Rows(m.setTableData()...)
 		m.SetSize(m.width, m.height)
 		m.ready = true
 	}
 
-	m.table, cmd = m.table.Update(msg)
-	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) SetSize(width, height int) {
-	h, _ := TableStyle.GetFrameSize()
-	widthPadding := 1
 	m.width = width
 	m.height = height
-	if m.ready {
-		m.table.SetWidth(m.width - h - widthPadding)
-		m.table.SetHeight(7)
-	} else {
-		m.table.SetWidth(m.width - h - widthPadding)
-		m.table.SetHeight(7)
-	}
-
-	//cols := m.table.Columns()
-	//cols[0].Width = m.width - h - 5 - ColumnWidth*len(cols)
-	//m.table.SetRows(m.setTableData())
 }
 
 var WeekColumnWidth = 8
 var WeekLabelWidth = 8
 
-func (m Model) setTableColumns() []table.Column {
-	cols := []table.Column{
-		{Title: "", Width: WeekLabelWidth},
-		{Title: "Mon", Width: WeekColumnWidth},
-		{Title: "Tue", Width: WeekColumnWidth},
-		{Title: "Wed", Width: WeekColumnWidth},
-		{Title: "Thu", Width: WeekColumnWidth},
-		{Title: "Fri", Width: WeekColumnWidth},
-		{Title: "Total", Width: WeekColumnWidth},
-	}
-	return cols
+func (m Model) tableHeaders() []string {
+	return []string{"Mon", "Tues", "Wed", "Thurs", "Fri", "Total"}
 }
 
-func (m Model) setTableData() []table.Row {
+func (m Model) setTableData() [][]string {
 	// Aggregate daily totals from entries
 	dailyTotals := make(map[string]time.Duration)
 	for _, entry := range m.entries {
@@ -216,7 +197,7 @@ func (m Model) setTableData() []table.Row {
 	// Group days into Mon–Fri weeks
 	type week struct {
 		label string
-		days  [5]time.Duration // Mon=0 ... Fri=4
+		days  [5]time.Time
 	}
 
 	var weeks []week
@@ -233,25 +214,31 @@ func (m Model) setTableData() []table.Row {
 
 		if weekday == time.Monday || current == nil {
 			weekNum++
-			weeks = append(weeks, week{label: fmt.Sprintf("Week %d", weekNum)})
+			weeks = append(weeks, week{})
 			current = &weeks[len(weeks)-1]
 		}
 
 		idx := int(weekday) - 1 // Mon=0, Tue=1, ..., Fri=4
-		key := day.Format("2006-01-02")
-		current.days[idx] = dailyTotals[key]
+		current.days[idx] = day
 	}
 
 	// Build rows
-	rows := []table.Row{}
+	rows := [][]string{}
 	for _, w := range weeks {
 		var weekTotal time.Duration
-		row := table.Row{w.label}
-		for _, d := range w.days {
+		row := []string{}
+		for _, day := range w.days {
+			if day.IsZero() {
+				row = append(row, "\n")
+				continue
+			}
+			key := day.Format("2006-01-02")
+			d := dailyTotals[key]
 			weekTotal += d
-			row = append(row, formatDuration(d))
+			date := day.Format("01/02")
+			row = append(row, fmt.Sprintf("%s\n%s", date, formatDuration(d)))
 		}
-		row = append(row, formatDuration(weekTotal))
+		row = append(row, fmt.Sprintf("\n%s", formatDuration(weekTotal)))
 		rows = append(rows, row)
 	}
 

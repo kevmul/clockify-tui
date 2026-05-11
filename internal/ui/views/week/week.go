@@ -9,75 +9,86 @@ import (
 	"clockify-app/internal/utils"
 	"fmt"
 	"strings"
-
 	"time"
 
-	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 )
 
 var TableStyle = lipgloss.NewStyle().Padding(1, 2)
 
-var ColumnWidth = 10
+var ColumnWidth = 11
 
 type Model struct {
-	config   *config.Config
-	entries  []models.Entry
-	projects []models.Project
-
-	table     table.Model
-	weekStart time.Time
-	width     int
-	height    int
-	ready     bool
+	config          *config.Config
+	entries         []models.Entry
+	projects        []models.Project
+	table           *table.Table
+	weekStart       time.Time
+	projectColWidth int
+	width           int
+	height          int
+	ready           bool
 }
 
-func New(cfg *config.Config) Model {
-	cols := []table.Column{
-		{Title: "Project", Width: 20},
-	}
-	// Define columns for the week view
-	today := time.Now()
+var (
+	headerStyle = lipgloss.NewStyle().
+			Foreground(styles.Primary).
+			Bold(true).
+			Align(lipgloss.Center)
 
-	// Find the start of the week (Sunday)
+	cellStyle = lipgloss.NewStyle().Padding(0, 1).Align(lipgloss.Right)
+
+	totalColStyle = lipgloss.NewStyle().
+			Padding(0, 1).
+			Width(ColumnWidth).
+			Foreground(styles.Secondary).
+			Align(lipgloss.Right)
+)
+
+func New(cfg *config.Config) Model {
+	today := time.Now()
 	weekday := int(today.Weekday())
 	startOfWeek := today.AddDate(0, 0, -weekday)
 
-	// Now add columns for each day of the week
-	for i := range 5 {
-		day := startOfWeek.AddDate(0, 0, i+1)
-		colTitle := day.Format("Mon01/02 ")
-		cols = append(cols, table.Column{Title: colTitle, Width: ColumnWidth})
-	}
-
-	// Now we can have the total at the end
-	cols = append(cols, table.Column{Title: "Total", Width: ColumnWidth})
-
-	t := table.New(
-		table.WithColumns(cols),
-		table.WithFocused(true),
-	)
-
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(styles.Secondary).
-		BorderBottom(true).
-		Bold(false)
-	s.Selected = s.Selected.
-		Foreground(styles.Text).
-		Background(styles.Secondary).
-		Bold(false)
-	t.SetStyles(s)
-
-	return Model{
+	m := Model{
 		config:    cfg,
 		entries:   []models.Entry{},
-		table:     t,
 		weekStart: startOfWeek,
 		ready:     false,
 	}
+
+	m.table = table.New().
+		BorderStyle(lipgloss.NewStyle().Foreground(styles.Secondary)).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			numCols := 7 // Project + 5 days + Total
+			if row == table.HeaderRow {
+				if col == 0 {
+					return headerStyle.Width(m.projectColWidth)
+				}
+				if col == numCols-1 {
+					// Last column is always the Total col
+					return headerStyle.Foreground(styles.Secondary)
+				}
+				return headerStyle
+			}
+			// Last column is the Totals column
+			if col == numCols-1 {
+				return totalColStyle
+			}
+			style := cellStyle
+			if row%2 == 0 {
+				return style.Foreground(styles.Muted)
+			}
+			if col == 0 {
+				style.Width(m.projectColWidth).Align(lipgloss.Left)
+			}
+
+			return style
+		})
+
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
@@ -92,26 +103,15 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m *Model) SetSize(width, height int) {
-	h, v := TableStyle.GetFrameSize()
-	heightPadding := 6
-	widthPadding := 1
 	m.width = width
 	m.height = height
-	if m.ready {
-		m.table.SetWidth(m.width - h - widthPadding)
-		m.table.SetHeight(m.height - v - heightPadding)
-	} else {
-		m.table.SetWidth(m.width - h - widthPadding)
-		m.table.SetHeight(m.height - v - heightPadding)
-	}
-
-	cols := m.table.Columns()
-	cols[0].Width = m.width - h - 5 - ColumnWidth*len(cols)
-	m.table.SetRows(m.setTableData())
+	frameWidth, _ := TableStyle.GetFrameSize()
+	m.projectColWidth = width - frameWidth - (ColumnWidth * 6) - 2
 }
 
 func (m *Model) PreviousWeek() tea.Cmd {
 	m.weekStart = m.weekStart.AddDate(0, 0, -7)
+	m.ready = false
 	return api.FetchEntriesForWeek(
 		m.config.APIKey,
 		m.config.WorkspaceId,
@@ -122,6 +122,7 @@ func (m *Model) PreviousWeek() tea.Cmd {
 
 func (m *Model) NextWeek() tea.Cmd {
 	m.weekStart = m.weekStart.AddDate(0, 0, 7)
+	m.ready = false
 	return api.FetchEntriesForWeek(
 		m.config.APIKey,
 		m.config.WorkspaceId,
@@ -131,65 +132,51 @@ func (m *Model) NextWeek() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "h", "left":
-			cmd = m.PreviousWeek()
-			cmds = append(cmds, cmd)
+			cmds = append(cmds, m.PreviousWeek())
 		case "l", "right":
-			cmd = m.NextWeek()
-			cmds = append(cmds, cmd)
+			cmds = append(cmds, m.NextWeek())
 		}
 
 	case messages.EntriesLoadedMsg:
 		m.entries = msg.Entries
-		m.table.SetRows(m.setTableData())
-		m.table.SetColumns(m.setTableColumns())
-		m.SetSize(m.width, m.height)
+		m.table.ClearRows()
+		m.table.Headers(m.tableHeaders()...)
+		m.table.Rows(m.setTableData()...)
 		m.ready = true
 
 	case messages.ProjectsLoadedMsg:
 		m.projects = msg.Projects
-
 	}
 
-	m.table, cmd = m.table.Update(msg)
-	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() tea.View {
-	return tea.NewView(TableStyle.Render(m.table.View()))
+	return tea.NewView(TableStyle.Render(m.table.Render()))
 }
 
-func (m Model) setTableColumns() []table.Column {
-	cols := []table.Column{
-		{Title: "Project", Width: 20},
-	}
-
+func (m Model) tableHeaders() []string {
+	headers := []string{"Project"}
 	for i := range 5 {
 		day := m.weekStart.AddDate(0, 0, i+1)
-
-		colTitle := day.Format("Mon01/02 ")
-		cols = append(cols, table.Column{Title: colTitle, Width: ColumnWidth})
+		headers = append(headers, day.Format("Mon 01/02"))
 	}
-
-	// Now we can have the total at the end
-	cols = append(cols, table.Column{Title: "Total", Width: ColumnWidth})
-
-	return cols
+	headers = append(headers, "Total")
+	return headers
 }
 
-func (m Model) setTableData() []table.Row {
-
-	rows := []table.Row{}
+func (m Model) setTableData() [][]string {
+	rows := [][]string{}
 	groupedEntries := groupEntriesByProject(m.entries)
 	startOfWeek := m.weekStart
 	dailyTotals := make(map[string]time.Duration)
+
 	for _, group := range groupedEntries {
 		project, _ := utils.FindProjectById(m.projects, group[0].ProjectID)
 
@@ -198,48 +185,62 @@ func (m Model) setTableData() []table.Row {
 			projectName = fmt.Sprintf("%s (%s)", project.Name, project.ClientName)
 		}
 
-		row := table.Row{projectName}
+		row := []string{projectName}
+		var totalDuration time.Duration
 
-		var totalDuration time.Duration = 0
 		for i := range 5 {
 			day := startOfWeek.AddDate(0, 0, i+1)
-			var dayDuration time.Duration = 0
+			var dayDuration time.Duration
 
 			for _, entry := range group {
 				entryDate := entry.TimeInterval.Start
-				if entryDate.Year() == day.Year() && entryDate.Month() == day.Month() && entryDate.Day() == day.Day() {
-					d := entry.TimeInterval.Duration
-					d = strings.TrimPrefix(d, "PT")
+				if entryDate.Year() == day.Year() &&
+					entryDate.Month() == day.Month() &&
+					entryDate.Day() == day.Day() {
+					d := strings.TrimPrefix(entry.TimeInterval.Duration, "PT")
 					entryDuration, _ := time.ParseDuration(strings.ToLower(d))
 					dayDuration += entryDuration
 					totalDuration += entryDuration
 				}
-
 			}
+
 			dailyTotals[day.Format("2006-01-02")] += dayDuration
-			row = append(row, dayDuration.String()) // Placeholder
+			row = append(row, formatDuration(dayDuration))
 		}
 
 		dailyTotals["total"] += totalDuration
-		row = append(row, totalDuration.String()) // Placeholder
+		row = append(row, formatDuration(totalDuration))
 		rows = append(rows, row)
 	}
-	// Now add the final row for totals
-	row := table.Row{"Totals"}
+
+	// Totals row
+	totalsRow := []string{"Totals"}
 	for i := range 5 {
 		day := startOfWeek.AddDate(0, 0, i+1)
-		row = append(row, dailyTotals[day.Format("2006-01-02")].String())
+		totalsRow = append(totalsRow, formatDuration(dailyTotals[day.Format("2006-01-02")]))
 	}
-	row = append(row, dailyTotals["total"].String())
-	rows = append(rows, row)
+	totalsRow = append(totalsRow, formatDuration(dailyTotals["total"]))
+	rows = append(rows, totalsRow)
+
 	return rows
 }
 
-// Helper function to group entries by project ID
 func groupEntriesByProject(entries []models.Entry) map[string][]models.Entry {
 	projectMap := make(map[string][]models.Entry)
 	for _, entry := range entries {
 		projectMap[entry.ProjectID] = append(projectMap[entry.ProjectID], entry)
 	}
 	return projectMap
+}
+
+func formatDuration(d time.Duration) string {
+	if d == 0 {
+		return "-"
+	}
+	h := int(d.Hours())
+	min := int(d.Minutes()) % 60
+	if h == 0 {
+		return fmt.Sprintf("%dm", min)
+	}
+	return fmt.Sprintf("%dh %dm", h, min)
 }
