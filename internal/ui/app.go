@@ -156,7 +156,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.width = msg.Width
 			m.height = msg.Height
 			m.viewport.SetWidth(m.width)
-			m.viewport.SetHeight(m.height)
+			m.viewport.SetHeight(m.height - verticalMarginHeight)
 			m.ready = true
 		} else {
 			m.viewport.SetWidth(msg.Width - 1)
@@ -452,7 +452,8 @@ func (m Model) View() tea.View {
 	navBar := m.RenderNavBar("entries", m.width)
 
 	// Add scrollbar
-	scrollbar := utils.RenderScrollbarSimple(m.viewport)
+	// scrollbar := utils.RenderScrollbarSimple(m.viewport)
+	scrollbar := ""
 
 	switch m.currentView {
 	case EntriesView, ProjectsView, WeekView, MonthView:

@@ -9,9 +9,9 @@ import (
 	"clockify-app/internal/ui/components/entryform"
 	"clockify-app/internal/ui/components/help"
 	"clockify-app/internal/utils"
+
 	"strings"
 
-	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -30,97 +30,63 @@ type Model struct {
 	help               *help.Model
 	deleteConfirmation *confirmation.Model
 	// UI
-	viewport viewport.Model
-	title    string
+	scrollOffset int
+	title        string
 }
 
 func NewEntryForm(cfg *config.Config, projects []models.Project) *Model {
 	form := entryform.New(cfg, projects)
-	viewport := viewport.New()
-	viewport.SetHeight(styles.ModalHeight)
-	viewport.SetContent(form.View().Content)
-
-	if viewport.Height() > viewport.TotalLineCount() {
-		viewport.SetHeight(viewport.TotalLineCount())
-		viewport.SetContent(form.View().Content)
-	}
 
 	return &Model{
-		modalType: EntryModal,
-		entryForm: &form,
-		viewport:  viewport,
-		title:     "New Entry",
+		modalType:    EntryModal,
+		entryForm:    &form,
+		title:        "New Entry",
+		scrollOffset: 0,
 	}
 }
 
 func UpdateEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
 	form := entryform.New(cfg, projects)
 	form = form.UpdateEntry(entry)
-	viewport := viewport.New()
-	viewport.SetHeight(0)
-	viewport.SetWidth(styles.ModalHeight)
-	viewport.SetContent(form.View().Content)
-
-	if viewport.Height() > viewport.TotalLineCount() {
-		viewport.SetHeight(viewport.TotalLineCount())
-		viewport.SetContent(form.View().Content)
-	}
 
 	return &Model{
-		modalType: EntryModal,
-		entryForm: &form,
-		viewport:  viewport,
-		title:     "Edit Entry",
+		modalType:    EntryModal,
+		entryForm:    &form,
+		title:        "Edit Entry",
+		scrollOffset: 0,
 	}
 }
 
 func CopyEntryForm(cfg *config.Config, projects []models.Project, entry models.Entry) *Model {
 	form := entryform.New(cfg, projects)
 	form = form.CopyEntry(entry)
-	viewport := viewport.New()
-	viewport.SetHeight(0)
-	viewport.SetWidth(styles.ModalHeight)
-	viewport.SetContent(form.View().Content)
-
-	if viewport.Height() > viewport.TotalLineCount() {
-		viewport.SetHeight(viewport.TotalLineCount())
-		viewport.SetContent(form.View().Content)
-	}
 
 	return &Model{
-		modalType: EntryModal,
-		entryForm: &form,
-		viewport:  viewport,
-		title:     "Copy Entry",
+		modalType:    EntryModal,
+		entryForm:    &form,
+		title:        "Copy Entry",
+		scrollOffset: 0,
 	}
 }
 
 func NewDeleteConfirmation(entryId string) *Model {
 	deleteConfirmation := confirmation.New(entryId, "entry")
-	viewport := viewport.New()
-	viewport.SetHeight(0)
-	viewport.SetWidth(4)
-	viewport.SetContent(deleteConfirmation.View().Content)
 
 	return &Model{
 		modalType:          DeleteConfirmation,
 		deleteConfirmation: &deleteConfirmation,
-		viewport:           viewport,
 		title:              "Confirm Deletion",
+		scrollOffset:       0,
 	}
 }
 
 func NewHelp(sections ...help.HelpSection) *Model {
 	helpModel := help.New(sections...)
-	viewport := viewport.New()
-	viewport.SetHeight(0)
-	viewport.SetWidth(10)
-	viewport.SetContent(helpModel.View().Content)
 	return &Model{
-		modalType: HelpModal,
-		help:      &helpModel,
-		viewport:  viewport,
-		title:     "Help",
+		modalType:    HelpModal,
+		help:         &helpModel,
+		title:        "Help",
+		scrollOffset: 0,
 	}
 }
 
@@ -139,9 +105,20 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		// We might move this to the modal themselves later...
-		if msg.String() == "esc" || msg.String() == "q" || msg.String() == "ctrl+c" {
-			// Handle closing in the modal itself if needed (e.g. to reset form state), then send message to parent to close the modal
+		switch msg.String() {
+		case "j", "down":
+			content := m.RenderContent()
+			lines := strings.Split(content, "\n")
+			maxOffset := max(0, len(lines)-styles.ModalHeight)
+			if m.scrollOffset < maxOffset {
+				m.scrollOffset++
+			}
+		case "k", "up":
+			if m.scrollOffset > 0 {
+				m.scrollOffset--
+			}
+
+		case "esc", "q", "ctrl+c":
 			var cmd tea.Cmd
 			switch m.modalType {
 			case EntryModal:
@@ -152,12 +129,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				return messages.ModalClosedMsg{}
 			})
 		}
+		// We might move this to the modal themselves later...
 	case messages.TasksLoadedMsg:
 		// Pass to entry form if needed
 		if m.modalType == EntryModal {
 			var cmd tea.Cmd
 			*m.entryForm, cmd = m.entryForm.Update(msg)
-			m.viewport.SetContent(m.RenderContent())
 			return m, cmd
 		}
 	}
@@ -169,9 +146,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		*m.entryForm, cmd = m.entryForm.Update(msg)
 		// resize viewportHeight
 		if m.entryForm.StepLines <= styles.ModalHeight {
-			m.viewport.SetHeight(m.entryForm.StepLines + 1)
+			// m.viewport.SetHeight(m.entryForm.StepLines + 1)
 		} else {
-			m.viewport.SetHeight(styles.ModalHeight)
+			// m.viewport.SetHeight(styles.ModalHeight)
 		}
 	case DeleteConfirmation:
 		*m.deleteConfirmation, cmd = m.deleteConfirmation.Update(msg)
@@ -180,12 +157,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 	cmds = append(cmds, cmd)
 
-	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	if _, ok := msg.(tea.KeyPressMsg); ok {
 		// Update viewport content on key events
-		m.viewport.SetContent(m.RenderContent())
 	}
 
 	return m, tea.Batch(cmds...)
@@ -193,29 +168,61 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View() tea.View {
 
-	if m.viewport.TotalLineCount() <= m.viewport.Height() {
-		// No scrollbar needed
-		// return styles.ModalStyle.Width(styles.ModalWidth).Render(viewport)
+	content := m.RenderContent()
+	lines := strings.Split(content, "\n")
+	maxOffset := max(0, len(lines)-styles.ModalHeight)
+	needsScroll := len(lines) > styles.ModalHeight
+
+	if !needsScroll {
+		// No scroll needed - full border
 		return tea.NewView(lipgloss.JoinVertical(
 			lipgloss.Top,
 			createBorderTitle(m.title, styles.ModalWidth, false),
-			styles.ModalStyle.Render(m.viewport.View()),
+			styles.ModalStyle.Render(content),
 		))
 	}
 
-	viewport := lipgloss.JoinVertical(
-		lipgloss.Top,
-		createBorderTitle(m.title, styles.ModalWidth, true),
-		styles.ModalWithScrollStyle.Render(m.viewport.View()),
-	)
+	// Scroll needed
+	offset := min(m.scrollOffset, maxOffset)
+	end := min(offset+styles.ModalHeight, len(lines))
+	visibleLines := lines[offset:end]
+
+	if len(visibleLines) < styles.ModalHeight {
+		visibleLines = append(visibleLines, "")
+	}
+
+	visibleContent := strings.Join(visibleLines, "\n")
 
 	return tea.NewView(lipgloss.JoinHorizontal(
 		lipgloss.Top,
-		// styles.ModalWithScrollStyle.Width(styles.ModalWidth).Render(viewport),
-
-		viewport,
-		utils.RenderScrollbarForModal(m.viewport),
+		lipgloss.JoinVertical(
+			lipgloss.Top,
+			createBorderTitle(m.title, styles.ModalWidth, true),
+			styles.ModalWithScrollStyle.Render(visibleContent),
+		),
+		utils.RenderScrollbarForModal(len(lines), styles.ModalHeight, offset),
 	))
+
+	// if m.viewport.TotalLineCount() <= m.viewport.Height() {
+	// 	// No scrollbar needed
+	// 	return tea.NewView(lipgloss.JoinVertical(
+	// 		lipgloss.Top,
+	// 		createBorderTitle(m.title, styles.ModalWidth, false),
+	// 		styles.ModalStyle.Render(content),
+	// 	))
+	// }
+	//
+	// viewport := lipgloss.JoinVertical(
+	// 	lipgloss.Top,
+	// 	createBorderTitle(m.title, styles.ModalWidth, true),
+	// 	styles.ModalWithScrollStyle.Render(content),
+	// )
+	//
+	// return tea.NewView(lipgloss.JoinHorizontal(
+	// 	lipgloss.Top,
+	// 	viewport,
+	// 	utils.RenderScrollbarForModal(m.viewport),
+	// ))
 
 }
 
@@ -228,7 +235,7 @@ func createBorderTitle(title string, modalWidth int, withScroll bool) string {
 	}
 
 	leftBorderLength := 2                                                //
-	rightBorderLength := modalWidth - titleLength - leftBorderLength - 2 // 2 for the spaces around the title
+	rightBorderLength := modalWidth - titleLength - leftBorderLength - 4 // 2 for the spaces around the title
 
 	s := styles.CustomBorder.TopLeft +
 		strings.Repeat(string(borderChar), leftBorderLength) +
@@ -237,6 +244,8 @@ func createBorderTitle(title string, modalWidth int, withScroll bool) string {
 
 	if !withScroll {
 		s += styles.CustomBorder.TopRight
+	} else {
+		s += borderChar
 	}
 
 	return styles.ModalTitleStyle.Render(s)
