@@ -108,7 +108,7 @@ var (
 	ActiveButtonStyle = lipgloss.NewStyle().
 				Background(Secondary).
 				Foreground(lipgloss.Color("#FFFFFF")).
-				UnderlineStyle(lipgloss.UnderlineCurly).
+				UnderlineStyle(lipgloss.UnderlineSingle).
 				Padding(0, 2).
 				Bold(true)
 

@@ -157,8 +157,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 	cmds = append(cmds, cmd)
 
-	cmds = append(cmds, cmd)
-
 	if _, ok := msg.(tea.KeyPressMsg); ok {
 		// Update viewport content on key events
 	}

@@ -12,6 +12,7 @@ import (
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // These constants represent each screen in our UI flow
@@ -328,12 +329,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				// Submit the time entry and transition to submission state
 				m.submitting = true
 				m.step++
+				lipgloss.Println("DEBUG: submit called")
 				if m.editing {
 					// Updating an existing entry
-					cmds = append(cmds, m.updateTimeEntry())
-				} else {
-					cmds = append(cmds, m.submitTimeEntry())
+					// cmds = append(cmds, m.updateTimeEntry())
+					return m, m.updateTimeEntry()
 				}
+				return m, m.submitTimeEntry()
 
 			case stepComplete:
 				cmds = append(cmds, func() tea.Msg {
