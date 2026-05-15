@@ -91,6 +91,18 @@ func (m Model) View() tea.View {
 func (m Model) renderFooter() string {
 	monthTotal := m.calculateMonthTotal()
 
+	monthStart := time.Date(m.currentMonth.Year(), m.currentMonth.Month(), 1, 0, 0, 0, 0, time.UTC)
+	monthEnd := time.Date(m.currentMonth.Year(), m.currentMonth.Month()+1, 1, 0, 0, 0, 0, time.UTC).Add(-time.Second)
+
+	workingDays := 0
+	for d := monthStart; d.Before(monthEnd); d = d.AddDate(0, 0, 1) {
+		if d.Weekday() != time.Saturday && d.Weekday() != time.Sunday {
+			workingDays++
+		}
+	}
+
+	maxMonth := workingDays * 8
+
 	totalStyle := lipgloss.NewStyle()
 
 	label := lipgloss.NewStyle().
@@ -101,7 +113,7 @@ func (m Model) renderFooter() string {
 
 	value := lipgloss.NewStyle().
 		Foreground(styles.Text).
-		Render(formatDuration(monthTotal))
+		Render(fmt.Sprintf("%s / %dh", formatDuration(monthTotal), maxMonth))
 
 	content := lipgloss.JoinHorizontal(
 		lipgloss.Left,
@@ -226,6 +238,7 @@ func (m Model) setTableData() [][]string {
 	rows := [][]string{}
 	for _, w := range weeks {
 		var weekTotal time.Duration
+		var weekMax int
 		row := []string{}
 		for _, day := range w.days {
 			if day.IsZero() {
@@ -234,11 +247,12 @@ func (m Model) setTableData() [][]string {
 			}
 			key := day.Format("2006-01-02")
 			d := dailyTotals[key]
+			weekMax += 8
 			weekTotal += d
 			date := day.Format("01/02")
 			row = append(row, fmt.Sprintf("%s\n%s", date, formatDuration(d)))
 		}
-		row = append(row, fmt.Sprintf("\n%s", formatDuration(weekTotal)))
+		row = append(row, fmt.Sprintf("\n%s/%dh", formatDuration(weekTotal), weekMax))
 		rows = append(rows, row)
 	}
 
