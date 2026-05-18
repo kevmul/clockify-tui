@@ -8,6 +8,7 @@ import (
 	"clockify-app/internal/styles"
 	"clockify-app/internal/utils"
 	"fmt"
+	"io"
 	"time"
 
 	"charm.land/bubbles/v2/list"
@@ -24,9 +25,7 @@ type Model struct {
 }
 
 func New(cfg *config.Config) Model {
-	d := list.NewDefaultDelegate()
-	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(styles.Primary).BorderLeftForeground(styles.Primary)
-	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(styles.Tertiary).BorderLeftForeground(styles.Primary)
+	d := newEntryDelegate()
 
 	list := list.New([]list.Item{}, d, 0, 0)
 	list.Title = "Clockify Entries"
@@ -110,15 +109,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if project.ID != "" {
 				projectName = fmt.Sprintf("%s", project.Name)
 			}
+
+			if projectName != "" {
+				description = fmt.Sprintf("%s %s", description, styles.MutedTextStyle.Render("("+projectName+")"))
+			}
 			items[i] = item{
 				title: description,
+				date:  entry.TimeInterval.Start.In(time.Local),
 				desc: fmt.Sprintf(
-					"%s-%s (%s)",
-
-					// entry.TimeInterval.Start.In(time.Local).Format("Mon, Jan 02 2006 3:04PM"),
+					"%s-%s",
 					entry.TimeInterval.Start.In(time.Local).Format("Mon, 2006_01_02 03:04PM"),
 					entry.TimeInterval.End.In(time.Local).Format("03:04PM"),
-					projectName,
 				),
 			}
 		}
@@ -158,12 +159,56 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 var docStyle = lipgloss.NewStyle()
 
 type item struct {
-	title, desc string
+	title string
+	desc  string
+	date  time.Time
 }
 
 func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
+
+var dayHeaderStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(styles.Muted).
+	PaddingLeft(1).
+	PaddingBottom(1)
+
+type entryDelegate struct {
+	list.DefaultDelegate
+}
+
+func newEntryDelegate() entryDelegate {
+	d := list.NewDefaultDelegate()
+	d.Styles.SelectedTitle = d.Styles.SelectedTitle.Foreground(styles.Primary).BorderLeftForeground(styles.Primary)
+	d.Styles.SelectedDesc = d.Styles.SelectedDesc.Foreground(styles.Tertiary).BorderLeftForeground(styles.Primary)
+	d.SetHeight(3)
+	return entryDelegate{d}
+}
+
+func (d entryDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(item)
+	if !ok {
+		return
+	}
+
+	showHeader := index == 0
+	if !showHeader && index > 0 {
+		if prev, ok := m.Items()[index-1].(item); ok {
+			py, pm, pd := prev.date.Date()
+			cy, cm, cd := i.date.Date()
+			showHeader = py != cy || pm != cm || pd != cd
+		}
+	}
+
+	if showHeader {
+		fmt.Fprintln(w, dayHeaderStyle.Render(i.date.Format("Monday, January 2")))
+	} else {
+		fmt.Fprintln(w, "")
+	}
+
+	d.DefaultDelegate.Render(w, m, index, listItem)
+}
 
 func (m Model) View() tea.View {
 
