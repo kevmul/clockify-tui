@@ -24,12 +24,12 @@ func TestUpdate(t *testing.T) {
 	model := New("entry1", "entry")
 
 	// Test left/right arrow keys for cursor movement
-	updated, _ := model.Update(tea.KeyPressMsg{Type: tea.KeyRight})
+	updated, _ := model.Update(tea.KeyPressMsg{Code: tea.KeyRight})
 	if updated.cursor != 1 {
 		t.Errorf("Expected cursor to be 1 after right arrow, got %d", updated.cursor)
 	}
 
-	updated, _ = updated.Update(tea.KeyPressMsg{Type: tea.KeyLeft})
+	updated, _ = updated.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
 	if updated.cursor != 0 {
 		t.Errorf("Expected cursor to be 0 after left arrow, got %d", updated.cursor)
 	}

@@ -76,8 +76,8 @@ func TestView_NotReady(t *testing.T) {
 	view := model.View()
 	expected := "Loading projects..."
 
-	if view != expected {
-		t.Errorf("Expected '%s', got '%s'", expected, view)
+	if view.Content != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, view.Content)
 	}
 }
 
@@ -90,8 +90,8 @@ func TestView_NoProjects(t *testing.T) {
 	view := model.View()
 	expected := "No projects found."
 
-	if view != expected {
-		t.Errorf("Expected '%s', got '%s'", expected, view)
+	if view.Content != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, view.Content)
 	}
 }
 
@@ -110,7 +110,7 @@ func TestView_WithProjects(t *testing.T) {
 	view := model.View()
 
 	// Should not be the loading or empty message
-	if view == "Loading projects..." || view == "No projects found." {
+	if view.Content == "Loading projects..." || view.Content == "No projects found." {
 		t.Error("View should render project list when projects are available")
 	}
 }

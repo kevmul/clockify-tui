@@ -41,7 +41,7 @@ func TestUpdate_NextDay(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 	m.CurrentDate = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'l'}}
+	msg := tea.KeyPressMsg{Code: 'l'}
 	m, _ = m.Update(msg)
 
 	expected := time.Date(2026, 1, 16, 0, 0, 0, 0, time.UTC)
@@ -55,7 +55,7 @@ func TestUpdate_PreviousDay(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 	m.CurrentDate = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'h'}}
+	msg := tea.KeyPressMsg{Code: 'h'}
 	m, _ = m.Update(msg)
 
 	expected := time.Date(2026, 1, 14, 0, 0, 0, 0, time.UTC)
@@ -69,7 +69,7 @@ func TestUpdate_NextWeek(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 	m.CurrentDate = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	msg := tea.KeyPressMsg{Code: 'j'}
 	m, _ = m.Update(msg)
 
 	expected := time.Date(2026, 1, 22, 0, 0, 0, 0, time.UTC)
@@ -83,7 +83,7 @@ func TestUpdate_PreviousWeek(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 	m.CurrentDate = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'k'}}
+	msg := tea.KeyPressMsg{Code: 'k'}
 	m, _ = m.Update(msg)
 
 	expected := time.Date(2026, 1, 8, 0, 0, 0, 0, time.UTC)
@@ -97,7 +97,7 @@ func TestUpdate_NextMonth(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 	m.CurrentDate = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyPgDown, Alt: false}
+	msg := tea.KeyPressMsg{Code: tea.KeyPgDown}
 	m, _ = m.Update(msg)
 
 	expected := time.Date(2026, 2, 15, 0, 0, 0, 0, time.UTC)
@@ -114,7 +114,7 @@ func TestUpdate_PreviousMonth(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 2, 15, 0, 0, 0, 0, time.UTC)
 	m.CurrentDate = time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyPgUp, Alt: false}
+	msg := tea.KeyPressMsg{Code: tea.KeyPgUp}
 	m, _ = m.Update(msg)
 
 	expected := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
@@ -130,7 +130,7 @@ func TestUpdate_Today(t *testing.T) {
 	m := New()
 	m.SelectedDate = time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}
+	msg := tea.KeyPressMsg{Code: 't'}
 	m, _ = m.Update(msg)
 
 	now := time.Now()
@@ -144,7 +144,7 @@ func TestUpdate_MonthChange(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 1, 31, 0, 0, 0, 0, time.UTC)
 	m.CurrentDate = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	msg := tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'l'}}
+	msg := tea.KeyPressMsg{Code: 'l'}
 	m, _ = m.Update(msg)
 
 	if m.CurrentDate.Month() != time.February {
@@ -154,10 +154,10 @@ func TestUpdate_MonthChange(t *testing.T) {
 
 func TestDefaultKeyMap(t *testing.T) {
 	km := DefaultKeyMap()
-	if !key.Matches(tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'t'}}, km.Today) {
+	if !key.Matches(tea.KeyPressMsg{Code: 't'}, km.Today) {
 		t.Error("Today key not set correctly")
 	}
-	if !key.Matches(tea.KeyPressMsg{Type: tea.KeyRunes, Runes: []rune{'l'}}, km.Next) {
+	if !key.Matches(tea.KeyPressMsg{Code: 'l'}, km.Next) {
 		t.Error("Next key not set correctly")
 	}
 }
@@ -168,7 +168,7 @@ func TestView(t *testing.T) {
 	m.SelectedDate = time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
 	view := m.View()
-	if view == "" {
+	if view.Content == "" {
 		t.Error("View should not be empty")
 	}
 }
