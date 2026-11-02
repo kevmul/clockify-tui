@@ -343,12 +343,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					return messages.ModalClosedMsg{}
 				})
 			}
-
 		}
 
 	case messages.TasksLoadedMsg:
-		m.tasks = msg.Tasks
-		m.tasks = append(m.tasks, models.Task{ID: "", Name: "No Task"}) // Option for no task
+		m.tasks = []models.Task{{ID: "", Name: "No Task"}} // Option for no tasks
+		m.tasks = append(m.tasks, msg.Tasks...)
 		m.tasksReady = true
 		m.StepLines = getLines(m.viewTimeInput())
 		return m, nil

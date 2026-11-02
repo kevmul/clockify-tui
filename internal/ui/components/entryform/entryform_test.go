@@ -181,8 +181,8 @@ func TestTasksLoadedMessage(t *testing.T) {
 	if !updated.tasksReady {
 		t.Error("tasksReady should be true after tasks loaded")
 	}
-	if updated.tasks[2].Name != "No Task" {
-		t.Error("Last task should be 'No Task' option")
+	if updated.tasks[0].Name != "No Task" {
+		t.Error("First task should be 'No Task' option")
 	}
 }
 
